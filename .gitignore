@@ -33,6 +33,7 @@ Thumbs.db
 # Local data outputs (raw/preprocessed/processed measurements)
 data/**
 !data/
+!data/**/
 !data/.gitkeep
 !data/**/.gitkeep
 
