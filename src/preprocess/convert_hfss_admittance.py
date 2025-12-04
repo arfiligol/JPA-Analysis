@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import argparse
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Optional, Sequence
+from typing import NamedTuple, cast
 
 import pandas as pd
 
@@ -40,7 +41,9 @@ def detect_columns(df: pd.DataFrame) -> tuple[str, str, str]:
     return l_cols[0], freq_cols[0], y_cols[0]
 
 
-def reshape_matrix(df: pd.DataFrame, l_col: str, freq_col: str, y_col: str) -> pd.DataFrame:
+def reshape_matrix(
+    df: pd.DataFrame, l_col: str, freq_col: str, y_col: str
+) -> pd.DataFrame:
     pivot = df.pivot(index=freq_col, columns=l_col, values=y_col).sort_index()
     pivot = pivot[sorted(pivot.columns)]
     return pivot
@@ -62,13 +65,13 @@ def derive_parameter_name(column: str) -> str:
 def build_component_record(
     component_id: str,
     pivot: pd.DataFrame,
-    freq_col: str,
-    l_col: str,
     raw_path: Path,
     parameter_name: str,
 ) -> ComponentRecord:
     frequency_axis = ParameterAxis(name="Freq", unit="GHz", values=pivot.index.tolist())
-    bias_axis = ParameterAxis(name="L_jun", unit="nH", values=pivot.columns.tolist())
+    bias_axis = ParameterAxis(
+        name="L_jun", unit="nH", values=[float(x) for x in pivot.columns]
+    )
 
     dataset = ParameterDataset(
         dataset_id=f"{component_id}-{parameter_name}-imag",
@@ -90,27 +93,36 @@ def build_component_record(
     return record
 
 
-def determine_component_id(path: Path, explicit: Optional[str]) -> str:
+def determine_component_id(path: Path, explicit: str | None) -> str:
     if explicit:
         return explicit
     return strip_component_suffix(path.stem)
 
 
-def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Convert HFSS admittance CSV to preprocessed JSON.")
-    parser.add_argument(
+class ProgramArgs(NamedTuple):
+    csv: list[Path]
+    component_id: str | None
+    output: Path | None
+
+
+def parse_args() -> ProgramArgs:
+    parser = argparse.ArgumentParser(
+        description="Convert HFSS admittance CSV to preprocessed JSON."
+    )
+    _ = parser.add_argument(
         "csv",
         nargs="*",
         type=Path,
         help="Path(s) to HFSS admittance CSV (defaults to DEFAULT_FILES).",
     )
-    parser.add_argument("--component-id", help="Override component identifier")
-    parser.add_argument(
+    _ = parser.add_argument("--component-id", help="Override component identifier")
+    _ = parser.add_argument(
         "--output",
         type=Path,
         help="Destination JSON file (defaults to data/preprocessed/<component_id>.json)",
     )
-    return parser.parse_args()
+    args = cast(ProgramArgs, cast(object, parser.parse_args()))
+    return ProgramArgs(csv=args.csv, component_id=args.component_id, output=args.output)
 
 
 def main() -> None:
@@ -134,7 +146,7 @@ def main() -> None:
         component_id = determine_component_id(raw_path, args.component_id)
         parameter_name = derive_parameter_name(y_col)
 
-        record = build_component_record(component_id, pivot, freq_col, l_col, raw_path, parameter_name)
+        record = build_component_record(component_id, pivot, raw_path, parameter_name)
 
         output_path = args.output or (PREPROCESSED_DIR / f"{component_id}.json")
         merged = upsert_component_record(

@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import argparse
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Optional, Sequence
 
 import numpy as np
 import pandas as pd
@@ -21,9 +21,7 @@ from src.preprocess.schema import (
 from src.utils import DATA_DIR, RAW_PHASE_DIR
 
 PREPROCESSED_DIR = DATA_DIR / "preprocessed"
-DEFAULT_FILES: Sequence[str] = [
-    "LJPAL658_v3_S11_Phase_Deg.csv"
-]
+DEFAULT_FILES: Sequence[str] = ["LJPAL658_v3_S11_Phase_Deg.csv"]
 
 
 def detect_columns(df: pd.DataFrame) -> tuple[str, str, str]:
@@ -33,26 +31,32 @@ def detect_columns(df: pd.DataFrame) -> tuple[str, str, str]:
     freq_cols = [c for c in df.columns if "freq" in c.lower()]
     if not freq_cols:
         raise ValueError("Unable to locate frequency column.")
-    phase_cols = [c for c in df.columns if "phase" in c.lower() or "deg(" in c.lower() or "cang" in c.lower()]
+    phase_cols = [
+        c
+        for c in df.columns
+        if "phase" in c.lower() or "deg(" in c.lower() or "cang" in c.lower()
+    ]
     if not phase_cols:
         raise ValueError("Unable to locate phase column.")
     return l_cols[0], freq_cols[0], phase_cols[0]
 
 
-def reshape_matrix(df: pd.DataFrame, l_col: str, freq_col: str, phase_col: str) -> pd.DataFrame:
+def reshape_matrix(
+    df: pd.DataFrame, l_col: str, freq_col: str, phase_col: str
+) -> pd.DataFrame:
     pivot = df.pivot(index=freq_col, columns=l_col, values=phase_col).sort_index()
     pivot = pivot[sorted(pivot.columns)]
     return pivot
 
 
-def determine_component_id(path: Path, explicit: Optional[str]) -> str:
+def determine_component_id(path: Path, explicit: str | None) -> str:
     if explicit:
         return explicit
     return strip_component_suffix(path.stem)
 
 
 def convert_to_radians(matrix: pd.DataFrame) -> pd.DataFrame:
-    return np.deg2rad(matrix)
+    return pd.DataFrame(np.deg2rad(matrix), index=matrix.index, columns=matrix.columns)
 
 
 def build_component_record(
@@ -62,7 +66,9 @@ def build_component_record(
     parameter_name: str,
 ) -> ComponentRecord:
     freq_axis = ParameterAxis(name="Freq", unit="GHz", values=pivot_rad.index.tolist())
-    bias_axis = ParameterAxis(name="L_jun", unit="nH", values=pivot_rad.columns.tolist())
+    bias_axis = ParameterAxis(
+        name="L_jun", unit="nH", values=pivot_rad.columns.astype(float).tolist()
+    )
 
     dataset_phase = ParameterDataset(
         dataset_id=f"{component_id}-{parameter_name}-phase",
@@ -84,8 +90,16 @@ def build_component_record(
     return record
 
 
-def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Convert HFSS phase CSV to preprocessed JSON.")
+class HFSSArgs(argparse.Namespace):
+    csv: list[Path] | None = None
+    component_id: str | None = None
+    output: Path | None = None
+
+
+def parse_args() -> HFSSArgs:
+    parser = argparse.ArgumentParser(
+        description="Convert HFSS phase CSV to preprocessed JSON."
+    )
     parser.add_argument(
         "csv",
         nargs="*",
@@ -98,7 +112,7 @@ def parse_args() -> argparse.Namespace:
         type=Path,
         help="Destination JSON file (defaults to data/preprocessed/<component_id>.json)",
     )
-    return parser.parse_args()
+    return parser.parse_args(namespace=HFSSArgs())
 
 
 def main() -> None:
@@ -116,12 +130,14 @@ def main() -> None:
                 print(f"[Warning] File not found: {raw_path}")
                 continue
 
-        df = pd.read_csv(raw_path)
+        df: pd.DataFrame = pd.read_csv(raw_path)  # type: ignore
         l_col, freq_col, phase_col = detect_columns(df)
         pivot_deg = reshape_matrix(df, l_col, freq_col, phase_col)
-        pivot_rad = pd.DataFrame(convert_to_radians(pivot_deg.values), index=pivot_deg.index, columns=pivot_deg.columns)
+        pivot_rad = convert_to_radians(pivot_deg)
         component_id = determine_component_id(raw_path, args.component_id)
-        record = build_component_record(component_id, pivot_rad, raw_path, parameter_name="S11")
+        record = build_component_record(
+            component_id, pivot_rad, raw_path, parameter_name="S11"
+        )
 
         output_path = args.output or (PREPROCESSED_DIR / f"{component_id}.json")
         merged = upsert_component_record(

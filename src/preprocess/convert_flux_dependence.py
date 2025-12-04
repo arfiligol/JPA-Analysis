@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import argparse
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Optional, Sequence
+from typing import NamedTuple, cast
 
 import numpy as np
 import pandas as pd
@@ -24,33 +25,51 @@ DEFAULT_FILES: Sequence[str] = [
 ]
 
 
-def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Convert flux dependence TXT sweeps to preprocessed JSON.")
-    parser.add_argument(
+class FluxDependenceArgs(NamedTuple):
+    txt: list[Path]
+    component_id: str | None
+    output: Path | None
+    parameter: str
+
+
+def parse_args() -> FluxDependenceArgs:
+    parser = argparse.ArgumentParser(
+        description="Convert flux dependence TXT sweeps to preprocessed JSON."
+    )
+    _ = parser.add_argument(
         "txt",
         nargs="*",
         type=Path,
         help="Path(s) to flux dependence TXT (defaults to DEFAULT_FILES).",
     )
-    parser.add_argument("--component-id", help="Override component identifier for the record.")
-    parser.add_argument(
+    _ = parser.add_argument(
+        "--component-id", help="Override component identifier for the record."
+    )
+    _ = parser.add_argument(
         "--output",
         type=Path,
         help="Destination JSON (default: data/preprocessed/<component_id>.json).",
     )
-    parser.add_argument(
+    _ = parser.add_argument(
         "--parameter",
         default="S11",
         help="Parameter name to associate with the amplitude/phase datasets (default: S11).",
     )
-    return parser.parse_args()
+    return cast(FluxDependenceArgs, cast(object, parser.parse_args()))
 
 
-def read_flux_file(path: Path) -> tuple[pd.DataFrame, Optional[float]]:
+def unwrap_phase_degrees(series: pd.Series[float]) -> np.ndarray:
+    return np.rad2deg(np.unwrap(np.deg2rad(series.to_numpy(dtype=float))))
+
+
+def read_flux_file(path: Path) -> tuple[pd.DataFrame, float | None]:
     text = path.read_text(encoding="utf-8", errors="ignore")
     lines = [line.strip() for line in text.splitlines() if line.strip()]
 
-    bias_idx = next((i for i, line in enumerate(lines) if line.lower().startswith("bias current")), None)
+    bias_idx = next(
+        (i for i, line in enumerate(lines) if line.lower().startswith("bias current")),
+        None,
+    )
     if bias_idx is None or bias_idx + 1 >= len(lines):
         raise ValueError("Bias current block not found in flux dependence file.")
     bias_values = [float(value) for value in lines[bias_idx + 1].split(",") if value]
@@ -65,7 +84,7 @@ def read_flux_file(path: Path) -> tuple[pd.DataFrame, Optional[float]]:
         raise ValueError("Frequency data section not found in flux dependence file.")
 
     power_line = next((line for line in lines if "probe power" in line.lower()), "")
-    power_dbm: Optional[float] = None
+    power_dbm: float | None = None
     if power_line:
         suffix = power_line.split("]")[-1].strip()
         try:
@@ -97,7 +116,7 @@ def read_flux_file(path: Path) -> tuple[pd.DataFrame, Optional[float]]:
     df = pd.DataFrame(records)
     df.sort_values(["Frequency_GHz", "Bias_mA"], inplace=True)
     df["Phase_deg_unwrapped"] = df.groupby("Frequency_GHz")["Phase_deg"].transform(
-        lambda series: np.rad2deg(np.unwrap(np.deg2rad(series.to_numpy(dtype=float))))
+        unwrap_phase_degrees
     )
     return df, power_dbm
 
@@ -118,8 +137,12 @@ def build_dataset(
     dataset_suffix: str,
     metadata: dict[str, str],
 ) -> ParameterDataset:
-    freq_axis = ParameterAxis(name="Frequency", unit="GHz", values=[float(v) for v in pivot.index.tolist()])
-    bias_axis = ParameterAxis(name="Bias", unit="mA", values=[float(v) for v in pivot.columns.tolist()])
+    freq_axis = ParameterAxis(
+        name="Frequency", unit="GHz", values=[float(v) for v in pivot.index.tolist()]
+    )
+    bias_axis = ParameterAxis(
+        name="Bias", unit="mA", values=[float(v) for v in pivot.columns.tolist()]
+    )
     return ParameterDataset(
         dataset_id=f"{component_id}-{dataset_suffix}",
         family=ParameterFamily.s_parameters,
@@ -132,7 +155,7 @@ def build_dataset(
     )
 
 
-def determine_component_id(path: Path, explicit: Optional[str]) -> str:
+def determine_component_id(path: Path, explicit: str | None) -> str:
     if explicit:
         return explicit
     return strip_component_suffix(path.stem)

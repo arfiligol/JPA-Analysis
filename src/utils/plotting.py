@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Dict, Optional, Tuple
+from typing import Any
 
 import plotly.graph_objects as go
 
@@ -19,13 +19,13 @@ def apply_plotly_layout(
     xaxis_title: str,
     yaxis_title: str,
     legend_title: str = "Legend",
-    x_range: Optional[Tuple[float, float]] = None,
-    y_range: Optional[Tuple[float, float]] = None,
-    x_tickformat: Optional[str] = None,
-    y_tickformat: Optional[str] = None,
+    x_range: tuple[float, float] | None = None,
+    y_range: tuple[float, float] | None = None,
+    x_tickformat: str | None = None,
+    y_tickformat: str | None = None,
     showlegend: bool = True,
-    width: Optional[int] = None,
-    height: Optional[int] = None,
+    width: int | None = None,
+    height: int | None = None,
 ) -> go.Figure:
     fig.update_layout(
         autosize=width is None and height is None,
@@ -47,13 +47,13 @@ def apply_plotly_layout(
         margin=dict(l=70, r=40, t=80, b=70),
     )
 
-    xaxis: Dict[str, Any] = {"title_text": xaxis_title}
+    xaxis: dict[str, Any] = {"title_text": xaxis_title}
     if x_range is not None:
         xaxis["range"] = list(x_range)
     if x_tickformat is not None:
         xaxis["tickformat"] = x_tickformat
 
-    yaxis: Dict[str, Any] = {"title_text": yaxis_title}
+    yaxis: dict[str, Any] = {"title_text": yaxis_title}
     if y_range is not None:
         yaxis["range"] = list(y_range)
     if y_tickformat is not None:
@@ -63,7 +63,7 @@ def apply_plotly_layout(
     return fig
 
 
-def plotly_default_config(title: str) -> Dict[str, Any]:
+def plotly_default_config(title: str) -> dict[str, Any]:
     return {
         "scrollZoom": True,
         "responsive": True,

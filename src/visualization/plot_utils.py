@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 import re
-from typing import List, Optional, Sequence, Tuple, cast
+from collections.abc import Sequence
 
 import matplotlib.pyplot as plt
 import plotly.graph_objects as go
 
-from src.types import AnalysisEntry, ModeFitSuccess
+from src.types import AnalysisEntry
 from src.utils import (
     MATPLOTLIB_FONT_SIZE,
     MATPLOTLIB_TITLE_SIZE,
@@ -17,7 +17,7 @@ from src.utils import (
 
 def plot_json_results(
     results_list: Sequence[AnalysisEntry],
-    target_modes: Optional[List[str]] = None,
+    target_modes: list[str] | None = None,
     title: str = "SQUID JPA Fitting Results",
     use_matplotlib: bool = False,
 ) -> None:
@@ -30,11 +30,11 @@ def plot_json_results(
 
 def _plot_json_results_plotly(
     results_list: Sequence[AnalysisEntry],
-    target_modes: Optional[List[str]],
+    target_modes: list[str] | None,
     title: str,
 ) -> None:
-    traces: List[go.Scatter] = []
-    colors: List[str] = [
+    traces: list[go.Scatter] = []
+    colors: list[str] = [
         "#1f77b4",
         "#d62728",
         "#2ca02c",
@@ -51,10 +51,9 @@ def _plot_json_results_plotly(
                 continue
             if mode_data["status"] != "success":
                 continue
-            success_data = cast(ModeFitSuccess, mode_data)
-            raw = success_data["raw_data"]
-            fit = success_data["fit_curve"]
-            params = success_data["params"]
+            raw = mode_data["raw_data"]
+            fit = mode_data["fit_curve"]
+            params = mode_data["params"]
             color = colors[color_idx % len(colors)]
             color_idx += 1
             traces.append(
@@ -79,7 +78,7 @@ def _plot_json_results_plotly(
                 )
             )
     fig = go.Figure(data=traces)
-    apply_plotly_layout(
+    _ = apply_plotly_layout(
         fig,
         title=title,
         xaxis_title="Junction Inductance L_jun [nH]",
@@ -91,11 +90,11 @@ def _plot_json_results_plotly(
 
 def _plot_json_results_matplotlib(
     results_list: Sequence[AnalysisEntry],
-    target_modes: Optional[List[str]],
+    target_modes: list[str] | None,
     title: str,
 ) -> None:
-    plt.figure(figsize=(10, 6))
-    colors: List[str] = ["blue", "red", "green", "purple", "orange", "cyan", "magenta"]
+    plt.figure(figsize=(10, 6))  # pyright: ignore[reportUnusedCallResult]
+    colors = ["blue", "red", "green", "purple", "orange", "cyan", "magenta"]
     color_idx = 0
     for res_obj in results_list:
         file_label = res_obj["filename"]
@@ -104,7 +103,7 @@ def _plot_json_results_matplotlib(
                 continue
             if mode_data["status"] != "success":
                 continue
-            success_data = cast(ModeFitSuccess, mode_data)
+            success_data = mode_data
             raw = success_data["raw_data"]
             fit = success_data["fit_curve"]
             params = success_data["params"]
@@ -126,20 +125,20 @@ def _plot_json_results_matplotlib(
                 label=f"Fit: Ls={params['Ls_nH']:.3f}n, C={params['C_eff_pF']:.2f}p",
             )
             color_idx += 1
-    plt.xlabel(r"Junction Inductance $L_{jun}$ [nH]", fontsize=MATPLOTLIB_FONT_SIZE)
-    plt.ylabel("Frequency [GHz]", fontsize=MATPLOTLIB_FONT_SIZE)
-    plt.title(title, fontsize=MATPLOTLIB_TITLE_SIZE)
-    plt.legend(bbox_to_anchor=(1.02, 1), loc="upper left")
-    plt.grid(True, linestyle="--", alpha=0.6)
-    plt.tight_layout()
-    plt.show()
+    plt.xlabel(r"Junction Inductance $L_{jun}$ [nH]", fontsize=MATPLOTLIB_FONT_SIZE)  # pyright: ignore
+    plt.ylabel("Frequency [GHz]", fontsize=MATPLOTLIB_FONT_SIZE)  # pyright: ignore
+    plt.title(title, fontsize=MATPLOTLIB_TITLE_SIZE)  # pyright: ignore
+    plt.legend(bbox_to_anchor=(1.02, 1), loc="upper left")  # pyright: ignore
+    plt.grid(True, linestyle="--", alpha=0.6)  # pyright: ignore
+    plt.tight_layout()  # pyright: ignore
+    plt.show()  # pyright: ignore
 
 
-def _version_key(filename: str) -> Tuple[int, str]:
+def _version_key(filename: str) -> tuple[int, str]:
     match = re.search(r"_v(\d+)", filename, flags=re.IGNORECASE)
     version = int(match.group(1)) if match else 10_000
     return (version, filename)
 
 
-def _analysis_sort_key(entry: AnalysisEntry) -> Tuple[int, str]:
+def _analysis_sort_key(entry: AnalysisEntry) -> tuple[int, str]:
     return _version_key(entry["filename"])

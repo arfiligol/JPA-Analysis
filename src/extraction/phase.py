@@ -1,24 +1,25 @@
 from __future__ import annotations
 
+from __future__ import annotations
+
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
 
-CsvPath = Union[str, Path]
+CsvPath = str | Path
 
 
-def extract_from_phase(csv_file_path: CsvPath, freq_range_ghz: Optional[Tuple[float, float]] = None) -> Optional[pd.DataFrame]:
+def extract_from_phase(csv_file_path: CsvPath, freq_range_ghz: tuple[float, float] | None = None) -> pd.DataFrame | None:
     """
     Extracts resonant frequencies from S11 Phase data based on Group Delay peaks.
     
     Args:
-        csv_file_path (Union[str, Path]): Path to the CSV file.
-        freq_range_ghz (Optional[Tuple[float, float]]): Frequency range to analyze (min, max) in GHz.
+        csv_file_path (str | Path): Path to the CSV file.
+        freq_range_ghz (tuple[float, float] | None): Frequency range to analyze (min, max) in GHz.
         
     Returns:
-        Optional[pd.DataFrame]: DataFrame containing 'L_jun', 'Mode 1', and 'Q_factor',
+        pd.DataFrame | None: DataFrame containing 'L_jun', 'Mode 1', and 'Q_factor',
                                 or None if extraction fails.
     """
     try:
@@ -29,21 +30,21 @@ def extract_from_phase(csv_file_path: CsvPath, freq_range_ghz: Optional[Tuple[fl
         return None
 
     # --- 1. Identify Columns ---
-    l_cols: List[str] = [c for c in df.columns if 'L_jun' in c or 'L_ind' in c]
-    l_col: Optional[str] = l_cols[0] if l_cols else None
+    l_cols: list[str] = [c for c in df.columns if 'L_jun' in c or 'L_ind' in c]
+    l_col: str | None = l_cols[0] if l_cols else None
 
-    freq_cols: List[str] = [c for c in df.columns if 'Freq' in c]
+    freq_cols: list[str] = [c for c in df.columns if 'Freq' in c]
     if not freq_cols: return None
     freq_col: str = freq_cols[0]
 
-    phase_cols: List[str] = [c for c in df.columns if 'deg' in c.lower() or 'ang' in c.lower() or 'phase' in c.lower()]
+    phase_cols: list[str] = [c for c in df.columns if 'deg' in c.lower() or 'ang' in c.lower() or 'phase' in c.lower()]
     if not phase_cols: return None
     phase_col: str = phase_cols[0]
     
     # --- 2. Process Data ---
-    results: List[Dict[str, float]] = []
+    results: list[dict[str, float]] = []
     
-    unique_Ls: List[float]
+    unique_Ls: list[float]
     if l_col:
         unique_Ls = sorted(df[l_col].unique())
     else:
@@ -81,7 +82,7 @@ def extract_from_phase(csv_file_path: CsvPath, freq_range_ghz: Optional[Tuple[fl
         
         f0 = freqs[peak_idx]
         
-        entry: Dict[str, float] = {'L_jun': float(l_val)}
+        entry: dict[str, float] = {'L_jun': float(l_val)}
         entry['Mode 1'] = float(f0 / 1e9) # GHz
         
         # Calculate Q Factor

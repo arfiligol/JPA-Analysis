@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import argparse
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Dict, List, Optional, Sequence, Tuple, cast
+from typing import NamedTuple, cast
 
 import pandas as pd
 
@@ -14,7 +15,7 @@ from src.preprocess.loader import (
     load_component_record,
 )
 from src.preprocess.schema import ParameterFamily, ParameterRepresentation
-from src.types import AnalysisEntry, FitResultsByMode, ModeFitResult, ModeFitSuccess
+from src.types import AnalysisEntry, FitResultsByMode, ModeFitResult
 from src.utils import PREPROCESSED_DATA_DIR
 from src.visualization import plot_json_results, print_dataframe_table
 
@@ -39,64 +40,73 @@ DEFAULT_COMPONENT_IDS: Sequence[str] = [
 DEFAULT_MODES_TO_PLOT: Sequence[str] = ["Mode 1", "Mode 2"]
 
 # Default parameter bounds (None indicates no bound).
-DEFAULT_FIT_BOUNDS: Dict[str, Tuple[Optional[float], Optional[float]]] = {
+DEFAULT_FIT_BOUNDS: dict[str, tuple[float | None, float | None]] = {
     "Ls_nH": (0.0, None),
     "C_pF": (0.0, None),
 }
 
 
-def parse_args() -> Tuple[
-    Sequence[str],
-    Optional[Sequence[str]],
-    str,
-    Dict[str, Tuple[Optional[float], Optional[float]]],
-    bool,
-]:
+class AdmittanceFitArgs(NamedTuple):
+    components: list[str]
+    modes: list[str] | None
+    title: str
+    ls_min: float | None
+    ls_max: float | None
+    c_min: float | None
+    c_max: float | None
+    matplotlib: bool
+
+
+def parse_args() -> AdmittanceFitArgs:
     parser = argparse.ArgumentParser(
         description=(
             "Batch analysis of admittance datasets stored under data/preprocessed/."
         )
     )
-    parser.add_argument(
+    _ = parser.add_argument(
         "components",
         nargs="*",
         help="Component IDs or JSON paths under data/preprocessed/ (defaults provided).",
     )
-    parser.add_argument(
+    _ = parser.add_argument(
         "--modes",
         nargs="+",
         help="Subset of modes to fit/plot (e.g., --modes 'Mode 1' 'Mode 2').",
     )
-    parser.add_argument(
+    _ = parser.add_argument(
         "--title",
         default="SQUID JPA Mode Fits",
         help="Custom title for the plot window.",
     )
-    parser.add_argument("--ls-min", type=float, default=None, help="Lower bound for Ls (nH).")
-    parser.add_argument("--ls-max", type=float, default=None, help="Upper bound for Ls (nH).")
-    parser.add_argument("--c-min", type=float, default=None, help="Lower bound for C (pF).")
-    parser.add_argument("--c-max", type=float, default=None, help="Upper bound for C (pF).")
-    parser.add_argument(
+    _ = parser.add_argument(
+        "--ls-min", type=float, default=None, help="Lower bound for Ls (nH)."
+    )
+    _ = parser.add_argument(
+        "--ls-max", type=float, default=None, help="Upper bound for Ls (nH)."
+    )
+    _ = parser.add_argument(
+        "--c-min", type=float, default=None, help="Lower bound for C (pF)."
+    )
+    _ = parser.add_argument(
+        "--c-max", type=float, default=None, help="Upper bound for C (pF)."
+    )
+    _ = parser.add_argument(
         "--matplotlib",
         action="store_true",
         help="Render plots with Matplotlib instead of the default Plotly view.",
     )
-    args = parser.parse_args()
-
-    file_list: Sequence[str] = args.components if args.components else DEFAULT_COMPONENT_IDS
-    mode_list: Optional[Sequence[str]] = args.modes if args.modes else DEFAULT_MODES_TO_PLOT
-    bounds = _build_bounds(args)
-    return file_list, mode_list, args.title, bounds, bool(args.matplotlib)
+    args = cast(AdmittanceFitArgs, cast(object, parser.parse_args()))
+    return args
 
 
 def _build_bounds(
-    args: argparse.Namespace,
-) -> Dict[str, Tuple[Optional[float], Optional[float]]]:
+    args: AdmittanceFitArgs,
+) -> dict[str, tuple[float | None, float | None]]:
     def resolve(
         key: str,
-        override_min: Optional[float],
-        override_max: Optional[float],
-    ) -> Tuple[Optional[float], Optional[float]]:
+        override_min: float | None,
+        override_max: float | None,
+    ) -> tuple[float | None, float | None]:
         default_min, default_max = DEFAULT_FIT_BOUNDS[key]
         bound_min = override_min if override_min is not None else default_min
         bound_max = override_max if override_max is not None else default_max
@@ -108,7 +118,7 @@ def _build_bounds(
     }
 
 
-def resolve_component_path(candidate: str) -> Optional[Path]:
+def resolve_component_path(candidate: str) -> Path | None:
     """Resolve a component identifier or explicit JSON path."""
     path = Path(candidate)
     if path.exists():
@@ -122,7 +132,7 @@ def resolve_component_path(candidate: str) -> Optional[Path]:
     return None
 
 
-def extract_modes(component_path: Path) -> Optional[pd.DataFrame]:
+def extract_modes(component_path: Path) -> pd.DataFrame | None:
     record = load_component_record(component_path)
     dataset = find_dataset(
         record,
@@ -141,7 +151,7 @@ def extract_modes(component_path: Path) -> Optional[pd.DataFrame]:
 def print_fit_summary(
     name: str,
     fit_results: FitResultsByMode,
-    target_modes: Optional[Sequence[str]],
+    target_modes: Sequence[str] | None,
 ) -> None:
     if not fit_results:
         print(f"[Warning] {name}: no fit results to summarize.")
@@ -157,27 +167,28 @@ def print_fit_summary(
             print(f"  > {mode_name}: failed ({result['reason']})")
             continue
 
-        success = cast(ModeFitSuccess, result)
-        params = success["params"]
-        metrics = success["metrics"]
+        params = result["params"]
+        metrics = result["metrics"]
         print(
             f"  > {mode_name}: "
-            f"Ls={params['Ls_nH']:.4f} nH, "
-            f"C={params['C_eff_pF']:.4f} pF, "
-            f"RMSE={metrics['RMSE']:.4f}"
+            + f"Ls={params['Ls_nH']:.4f} nH, "
+            + f"C={params['C_eff_pF']:.4f} pF, "
+            + f"RMSE={metrics['RMSE']:.4f}"
         )
     print()
 
 
 def analyze_file(
     component_path: Path,
-    modes_to_highlight: Optional[Sequence[str]],
-    parameter_bounds: Dict[str, Tuple[Optional[float], Optional[float]]],
-) -> Optional[AnalysisEntry]:
+    modes_to_highlight: Sequence[str] | None,
+    parameter_bounds: dict[str, tuple[float | None, float | None]],
+) -> AnalysisEntry | None:
     print(f"\n=== Processing {component_path.stem} ===")
     df_modes = extract_modes(component_path)
     if df_modes is None or df_modes.empty:
-        print(f"  > Extraction failed or returned empty results for {component_path.stem}")
+        print(
+            f"  > Extraction failed or returned empty results for {component_path.stem}"
+        )
         return None
 
     print_dataframe_table("Extracted Resonant Modes", df_modes)
@@ -190,8 +201,18 @@ def analyze_file(
 
 
 def run() -> None:
-    file_list, modes_to_plot, plot_title, parameter_bounds, use_matplotlib = parse_args()
-    analysis_entries: List[AnalysisEntry] = []
+    args = parse_args()
+
+    file_list: Sequence[str] = (
+        args.components if args.components else DEFAULT_COMPONENT_IDS
+    )
+    modes_to_plot: Sequence[str] | None = (
+        args.modes if args.modes else DEFAULT_MODES_TO_PLOT
+    )
+    parameter_bounds = _build_bounds(args)
+    plot_title = args.title
+    use_matplotlib = args.matplotlib
+    analysis_entries: list[AnalysisEntry] = []
 
     for identifier in file_list:
         component_path = resolve_component_path(identifier)
@@ -205,7 +226,7 @@ def run() -> None:
         print("[Error] No datasets were processed successfully.")
         return
 
-    plot_modes: Optional[List[str]] = list(modes_to_plot) if modes_to_plot else None
+    plot_modes: list[str] | None = list(modes_to_plot) if modes_to_plot else None
     plot_json_results(
         analysis_entries,
         target_modes=plot_modes,

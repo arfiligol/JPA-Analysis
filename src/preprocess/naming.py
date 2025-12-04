@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Sequence
+from collections.abc import Sequence
 
 KEYWORD_PREFIXES: Sequence[str] = (
     "S11",
@@ -33,7 +33,7 @@ def strip_component_suffix(stem: str) -> str:
     Used to normalize component IDs derived from filenames.
     """
     upper = stem.upper()
-    for idx, char in enumerate(stem):
+    for idx, _ in enumerate(stem):
         prev_char = stem[idx - 1] if idx > 0 else ""
         if idx > 0 and prev_char not in _DELIMS:
             continue

@@ -1,17 +1,17 @@
 from __future__ import annotations
 
-from typing import Union
+from __future__ import annotations
 
 import numpy as np
 
 
 def y11_imaginary(
-    L_jun: Union[float, np.ndarray],
-    freq_ghz: Union[float, np.ndarray],
+    L_jun: float | np.ndarray,
+    freq_ghz: float | np.ndarray,
     Ls1_nH: float,
     Ls2_nH: float,
     C_pF: float,
-) -> Union[float, np.ndarray]:
+) -> float | np.ndarray:
     """
     Imaginary part of the Y11 admittance model:
 

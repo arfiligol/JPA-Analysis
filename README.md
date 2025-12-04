@@ -13,21 +13,13 @@ To ensure maintainability, readability, and scalability, all contributions to th
 
 2.  **Strict Typing**
     *   All functions must use Python type hints for arguments and return values.
-    *   Use the `typing` module (e.g., `List`, `Dict`, `Optional`, `Tuple`) or standard types.
-    *   This facilitates code review and static analysis.
+    *   Use modern Python 3.12+ syntax (e.g., `list`, `dict`, `tuple`, `|` for unions) instead of `typing` module aliases.
+    *   The codebase is checked with `basedpyright` for type safety.
 
 3.  **Standalone Models**
     *   Physical models (e.g., LC resonance formulas) must be implemented as standalone functions or classes.
     *   They should be decoupled from data processing logic to allow independent verification and testing.
 
-## Type Checking Requirements
-All Python code must satisfy **Pylance Standard** mode. When adding or modifying code:
-
-- Provide type hints for every public function, method, class attribute, and module-level constant.
-- Avoid implicit `Any`. Use `TypedDict`, `Protocol`, `dataclasses`, or well-named helper objects to describe DataFrame schemas and structured data.
-- Apply `typing.cast` or runtime assertions whenever Pandas/Numpy operations change types so the analyzer can narrow them.
-- Keep private/protected attribute access explicit and documented; prefer helper methods over reaching into internals.
-- Ensure new files pass `Pylance` with `python.analysis.typeCheckingMode = "standard"` before submitting changes.
 
 ## Analysis Workflow
 The current analysis flow consists of the following stages:

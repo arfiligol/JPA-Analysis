@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import cast
+
 import pandas as pd
 
 
@@ -15,5 +17,5 @@ def print_dataframe_table(title: str, df: pd.DataFrame) -> None:
     if df.empty:
         print("(no rows)")
     else:
-        print(df.to_string(index=False))
+        print(cast(str, df.to_string(index=False)))
     print("==============================\n")

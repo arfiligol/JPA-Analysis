@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import List
+from typing import List, cast
 
 import numpy as np
 import pandas as pd
@@ -17,7 +17,7 @@ def zero_crosses(
     label_col: str,
 ) -> pd.DataFrame:
     y = group[imag_col]
-    sign = np.sign(y)
+    sign = pd.Series(np.sign(y), index=y.index)
     next_sign = sign.shift(-1)
     crossing_rows = group[(sign == 0) | (sign * next_sign < 0)].copy()
     if crossing_rows.empty:
@@ -26,14 +26,14 @@ def zero_crosses(
     idx = crossing_rows.index
     freqs: List[float] = []
     for i in idx:
-        pos = group.index.get_loc(i)
+        pos = cast(int, group.index.get_loc(i))
         if sign.loc[i] == 0 or pos == len(group) - 1:
-            freqs.append(float(group.loc[i, freq_col]))
+            freqs.append(float(cast(float, group.loc[i, freq_col])))
             continue
-        f1 = float(group.iloc[pos][freq_col])
-        f2 = float(group.iloc[pos + 1][freq_col])
-        y1 = float(y.iloc[pos])
-        y2 = float(y.iloc[pos + 1])
+        f1 = float(cast(float, group.iloc[pos][freq_col]))
+        f2 = float(cast(float, group.iloc[pos + 1][freq_col]))
+        y1 = float(cast(float, y.iloc[pos]))
+        y2 = float(cast(float, y.iloc[pos + 1]))
         freqs.append(f1 - y1 * (f2 - f1) / (y2 - y1))
     crossing_rows[freq_col] = freqs
     return crossing_rows[[label_col, freq_col, imag_col]]

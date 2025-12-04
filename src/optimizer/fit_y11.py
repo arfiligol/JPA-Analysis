@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import cast
+
 import numpy as np
 import pandas as pd
 from lmfit import Model
@@ -42,7 +44,9 @@ def fit_y11_response(df_raw: pd.DataFrame) -> Y11FitResult:
         result = model.fit(imag_y, params=params, L_jun=l_jun, freq_ghz=freq)
         if not result.success:
             raise RuntimeError(result.message)
-        predictions = result.eval(params=result.params, L_jun=l_jun, freq_ghz=freq)
+        predictions = cast(
+            np.ndarray, result.eval(params=result.params, L_jun=l_jun, freq_ghz=freq)
+        )
         rmse = float(np.sqrt(np.mean((imag_y - predictions) ** 2)))
         success: Y11FitSuccess = {
             "status": "success",

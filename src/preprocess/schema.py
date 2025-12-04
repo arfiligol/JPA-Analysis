@@ -1,10 +1,11 @@
 from __future__ import annotations
 
+from collections.abc import Sequence
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Dict, List, Sequence, Union
+from typing import cast
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, ValidationInfo, field_validator
 
 
 class SourceType(str, Enum):
@@ -54,7 +55,7 @@ class ParameterAxis(BaseModel):
         return values
 
 
-ValueArray = Union[List[float], List[List[float]]]
+ValueArray = list[float] | list[list[float]]
 
 
 class ParameterDataset(BaseModel):
@@ -71,41 +72,37 @@ class ParameterDataset(BaseModel):
     parameter: str  # e.g., S11, Z21
     representation: ParameterRepresentation
     ports: Sequence[str] = Field(default_factory=list)
-    axes: List[ParameterAxis]
+    axes: list[ParameterAxis]
     values: ValueArray
-    metadata: Dict[str, str] = Field(default_factory=dict)
+    metadata: dict[str, str] = Field(default_factory=dict)
 
     @field_validator("values")
-    def validate_shape(cls, values: ValueArray, info):
+    def validate_shape(cls, values: ValueArray, info: ValidationInfo):
         data = info.data if hasattr(info, "data") else {}
-        axes = data.get("axes", [])
+        axes = cast(list[ParameterAxis], data.get("axes", []))
         dim = len(axes)
         if dim == 0:
             raise ValueError("At least one axis is required.")
         if dim == 1:
             expected_len = len(axes[0].values)
-            if not isinstance(values, list) or (
-                values and isinstance(values[0], list)
-            ):
+            if values and isinstance(values[0], list):
                 raise ValueError("1D dataset must be a list of numbers.")
             if len(values) != expected_len:
                 raise ValueError("Values length must match axis length.")
         elif dim == 2:
             freq_len = len(axes[0].values)
             bias_len = len(axes[1].values)
-            if (
-                not isinstance(values, list)
-                or not values
-                or not isinstance(values[0], list)
-            ):
+            if not values or not isinstance(values[0], list):
                 raise ValueError("2D dataset must be a list of lists.")
-            if len(values) != freq_len:
+
+            # Help the type checker know this is a list of lists
+            matrix_values = cast(list[list[float]], values)
+
+            if len(matrix_values) != freq_len:
                 raise ValueError("Row count must match first axis length.")
-            for row in values:
+            for row in matrix_values:
                 if len(row) != bias_len:
-                    raise ValueError(
-                        "Column count must match second axis length."
-                    )
+                    raise ValueError("Column count must match second axis length.")
         else:
             raise ValueError("Only up to 2 axes are currently supported.")
         return values
@@ -120,13 +117,15 @@ class ComponentRecord(BaseModel):
 
     component_id: str
     source_type: SourceType
-    datasets: List[ParameterDataset]
-    metadata: Dict[str, str] = Field(default_factory=dict)
-    sweep_parameters: Dict[str, float] = Field(default_factory=dict)
-    raw_files: List[RawFileMeta] = Field(default_factory=list)
+    datasets: list[ParameterDataset]
+    metadata: dict[str, str] = Field(default_factory=dict)
+    sweep_parameters: dict[str, float] = Field(default_factory=dict)
+    raw_files: list[RawFileMeta] = Field(default_factory=list)
 
     @field_validator("datasets")
-    def validate_datasets(cls, datasets: List[ParameterDataset]) -> List[ParameterDataset]:
+    def validate_datasets(
+        cls, datasets: list[ParameterDataset]
+    ) -> list[ParameterDataset]:
         if not datasets:
             raise ValueError("Component must include at least one dataset.")
         return datasets

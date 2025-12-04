@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import List
+from __future__ import annotations
 
 import numpy as np
 import pandas as pd
@@ -10,7 +10,7 @@ def normalize_mode_columns(df: pd.DataFrame) -> pd.DataFrame:
     """
     If Mode 1 is entirely zero, shift remaining Mode columns forward and pad the tail with NaN.
     """
-    mode_cols: List[str] = [col for col in df.columns if col.startswith("Mode ")]
+    mode_cols: list[str] = [col for col in df.columns if col.startswith("Mode ")]
     if not mode_cols or "Mode 1" not in df.columns:
         return df
 

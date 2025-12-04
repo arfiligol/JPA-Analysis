@@ -1,12 +1,14 @@
 from __future__ import annotations
 
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Optional, Sequence
+from typing import cast
 
 import pandas as pd
 
 from src.preprocess.schema import (
     ComponentRecord,
+    ParameterAxis,
     ParameterDataset,
     ParameterFamily,
     ParameterRepresentation,
@@ -55,8 +57,8 @@ def dataset_to_dataframe(
     freq_col = _canonical_column_name(axis_freq, default="Freq")
     bias_col = _canonical_column_name(axis_bias, default="L_jun")
 
-    matrix: Sequence[Sequence[float]] = dataset.values  # type: ignore[assignment]
-    rows = []
+    matrix = cast(Sequence[Sequence[float]], dataset.values)
+    rows: list[dict[str, float]] = []
     for row_idx, freq in enumerate(axis_freq.values):
         row_vals = matrix[row_idx]
         for col_idx, bias in enumerate(axis_bias.values):
@@ -70,7 +72,7 @@ def dataset_to_dataframe(
     return pd.DataFrame(rows)
 
 
-def _canonical_column_name(axis, default: Optional[str] = None) -> str:
+def _canonical_column_name(axis: ParameterAxis, default: str | None = None) -> str:
     name = axis.name
     if default and default.lower() in name.lower():
         name = default

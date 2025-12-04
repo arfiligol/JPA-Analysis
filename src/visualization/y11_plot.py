@@ -18,14 +18,14 @@ def plot_y11_fit(filename: str, fit: Y11FitSuccess) -> None:
     unique_ljun = np.unique(l_jun_raw)
     cmap = plt.get_cmap("tab10")
 
-    plt.figure(figsize=(10, 6))
+    _ = plt.figure(figsize=(10, 6))
     for idx, l_val in enumerate(sorted(unique_ljun)):
         mask_raw = np.isclose(l_jun_raw, l_val)
         if not np.any(mask_raw):
             continue
         color = cmap(idx % cmap.N)
-        label = f"L_jun={l_val:.3f} nH (L_squid={l_val/2:.3f} nH)"
-        plt.scatter(
+        label = f"L_jun={l_val:.3f} nH (L_squid={l_val / 2:.3f} nH)"
+        _ = plt.scatter(
             freq_raw[mask_raw],
             imag_raw[mask_raw],
             s=12,
@@ -37,7 +37,7 @@ def plot_y11_fit(filename: str, fit: Y11FitSuccess) -> None:
         mask_fit = np.isclose(l_jun_fit, l_val)
         if np.any(mask_fit):
             order = np.argsort(freq_fit[mask_fit])
-            plt.plot(
+            _ = plt.plot(
                 freq_fit[mask_fit][order],
                 imag_fit[mask_fit][order],
                 linestyle="--",
@@ -46,10 +46,10 @@ def plot_y11_fit(filename: str, fit: Y11FitSuccess) -> None:
                 label=f"{label} fit",
             )
 
-    plt.xlabel("Frequency [GHz]")
-    plt.ylabel("Im(Y11) [S]")
-    plt.title(f"Y11 Fit - {filename}")
-    plt.grid(True, linestyle="--", alpha=0.5)
-    plt.legend(bbox_to_anchor=(1.02, 1), loc="upper left")
+    _ = plt.xlabel("Frequency [GHz]")
+    _ = plt.ylabel("Im(Y11) [S]")
+    _ = plt.title(f"Y11 Fit - {filename}")
+    _ = plt.grid(True, linestyle="--", alpha=0.5)
+    _ = plt.legend(bbox_to_anchor=(1.02, 1), loc="upper left")
     plt.tight_layout()
     plt.show()

@@ -1,11 +1,13 @@
 from __future__ import annotations
 
-from typing import Literal, Sequence
+from collections.abc import Sequence
+from typing import Literal
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
+from matplotlib.axes import Axes
 from plotly.subplots import make_subplots
 
 from src.utils import (
@@ -56,7 +58,7 @@ def _render_plotly(
             subplot_titles=("Amplitude [dB]", "Phase [deg]"),
             vertical_spacing=0.08,
         )
-        fig.add_trace(
+        _ = fig.add_trace(
             go.Heatmap(
                 x=bias,
                 y=freq,
@@ -68,7 +70,7 @@ def _render_plotly(
             row=1,
             col=1,
         )
-        fig.add_trace(
+        _ = fig.add_trace(
             go.Heatmap(
                 x=bias,
                 y=freq,
@@ -81,11 +83,11 @@ def _render_plotly(
             row=2,
             col=1,
         )
-        fig.update_xaxes(title_text="Bias Current [mA]", row=2, col=1)
-        fig.update_yaxes(title_text="Frequency [GHz]", row=1, col=1)
-        fig.update_yaxes(title_text="Frequency [GHz]", row=2, col=1)
-        fig.update_layout(font=dict(size=PLOTLY_FONT_SIZE))
-        apply_plotly_layout(
+        _ = fig.update_xaxes(title_text="Bias Current [mA]", row=2, col=1)
+        _ = fig.update_yaxes(title_text="Frequency [GHz]", row=1, col=1)
+        _ = fig.update_yaxes(title_text="Frequency [GHz]", row=2, col=1)
+        _ = fig.update_layout(font=dict(size=PLOTLY_FONT_SIZE))
+        _ = apply_plotly_layout(
             fig,
             title=dataset_name,
             xaxis_title="Bias Current [mA]",
@@ -103,12 +105,14 @@ def _render_plotly(
             y=freq,
             z=pivot.values,
             colorbar=dict(title=label.split()[0]),
-            colorscale=_PLOTLY_COLORSETS["amplitude" if view == "amplitude" else "phase"],
+            colorscale=_PLOTLY_COLORSETS[
+                "amplitude" if view == "amplitude" else "phase"
+            ],
             zsmooth="best",
             zmid=0.0 if view != "amplitude" else None,
         )
     )
-    apply_plotly_layout(
+    _ = apply_plotly_layout(
         fig,
         title=dataset_name,
         xaxis_title="Bias Current [mA]",
@@ -145,8 +149,8 @@ def _render_matplotlib(
             phase_label,
             "viridis",
         )
-        axes[1].set_xlabel("Bias Current [mA]", fontsize=MATPLOTLIB_FONT_SIZE)
-        fig.suptitle(dataset_name, fontsize=MATPLOTLIB_TITLE_SIZE)
+        _ = axes[1].set_xlabel("Bias Current [mA]", fontsize=MATPLOTLIB_FONT_SIZE)
+        _ = fig.suptitle(dataset_name, fontsize=MATPLOTLIB_TITLE_SIZE)
         plt.tight_layout()
         plt.show()
         return
@@ -163,14 +167,14 @@ def _render_matplotlib(
         label,
         cmap,
     )
-    plt.xlabel("Bias Current [mA]", fontsize=MATPLOTLIB_FONT_SIZE)
-    plt.title(dataset_name, fontsize=MATPLOTLIB_TITLE_SIZE)
+    _ = plt.xlabel("Bias Current [mA]", fontsize=MATPLOTLIB_FONT_SIZE)
+    _ = plt.title(dataset_name, fontsize=MATPLOTLIB_TITLE_SIZE)
     plt.tight_layout()
     plt.show()
 
 
 def _draw_matplotlib_heatmap(
-    ax: plt.Axes,
+    ax: Axes,
     bias: np.ndarray,
     freq: np.ndarray,
     values: np.ndarray,
@@ -178,16 +182,16 @@ def _draw_matplotlib_heatmap(
     cmap: str,
 ) -> None:
     c = ax.pcolormesh(bias, freq, values, shading="auto", cmap=cmap)
-    ax.set_ylabel("Frequency [GHz]", fontsize=MATPLOTLIB_FONT_SIZE)
-    ax.set_title(label, fontsize=MATPLOTLIB_FONT_SIZE)
-    plt.colorbar(c, ax=ax, label=label)
+    _ = ax.set_ylabel("Frequency [GHz]", fontsize=MATPLOTLIB_FONT_SIZE)
+    _ = ax.set_title(label, fontsize=MATPLOTLIB_FONT_SIZE)
+    _ = plt.colorbar(c, ax=ax, label=label)
 
 
 def render_flux_slice(
     title: str,
-    x_values: Sequence[float],
-    amplitude_values: Sequence[float],
-    phase_values: Sequence[float],
+    x_values: Sequence[float] | np.ndarray,
+    amplitude_values: Sequence[float] | np.ndarray,
+    phase_values: Sequence[float] | np.ndarray,
     x_axis_label: str,
     phase_label: str,
     use_matplotlib: bool,
@@ -214,14 +218,14 @@ def render_flux_slice(
 
 def _render_slice_plotly(
     title: str,
-    x_values: Sequence[float],
-    amplitude_values: Sequence[float],
-    phase_values: Sequence[float],
+    x_values: Sequence[float] | np.ndarray,
+    amplitude_values: Sequence[float] | np.ndarray,
+    phase_values: Sequence[float] | np.ndarray,
     x_axis_label: str,
     phase_label: str,
 ) -> None:
     fig = make_subplots(rows=1, cols=1, specs=[[{"secondary_y": True}]])
-    fig.add_trace(
+    _ = fig.add_trace(
         go.Scatter(
             x=list(x_values),
             y=list(amplitude_values),
@@ -233,7 +237,7 @@ def _render_slice_plotly(
         col=1,
         secondary_y=False,
     )
-    fig.add_trace(
+    _ = fig.add_trace(
         go.Scatter(
             x=list(x_values),
             y=list(phase_values),
@@ -245,10 +249,10 @@ def _render_slice_plotly(
         col=1,
         secondary_y=True,
     )
-    fig.update_xaxes(title_text=x_axis_label)
-    fig.update_yaxes(title_text="Amplitude [dB]", secondary_y=False)
-    fig.update_yaxes(title_text=phase_label, secondary_y=True)
-    apply_plotly_layout(
+    _ = fig.update_xaxes(title_text=x_axis_label)
+    _ = fig.update_yaxes(title_text="Amplitude [dB]", secondary_y=False)
+    _ = fig.update_yaxes(title_text=phase_label, secondary_y=True)
+    _ = apply_plotly_layout(
         fig,
         title=title,
         xaxis_title=x_axis_label,
@@ -260,24 +264,37 @@ def _render_slice_plotly(
 
 def _render_slice_matplotlib(
     title: str,
-    x_values: Sequence[float],
-    amplitude_values: Sequence[float],
-    phase_values: Sequence[float],
+    x_values: Sequence[float] | np.ndarray,
+    amplitude_values: Sequence[float] | np.ndarray,
+    phase_values: Sequence[float] | np.ndarray,
     x_axis_label: str,
     phase_label: str,
 ) -> None:
     fig, ax1 = plt.subplots(figsize=(8, 5))
-    ax1.plot(x_values, amplitude_values, color="#1f77b4", linewidth=2.5, label="Amplitude [dB]")
-    ax1.set_xlabel(x_axis_label, fontsize=MATPLOTLIB_FONT_SIZE)
-    ax1.set_ylabel("Amplitude [dB]", fontsize=MATPLOTLIB_FONT_SIZE, color="#1f77b4")
-    ax1.tick_params(axis="y", labelcolor="#1f77b4")
-    ax1.grid(True, linestyle="--", alpha=0.4)
+    _ = ax1.plot(
+        x_values,
+        amplitude_values,
+        color="#1f77b4",
+        linewidth=2.5,
+        label="Amplitude [dB]",
+    )
+    _ = ax1.set_xlabel(x_axis_label, fontsize=MATPLOTLIB_FONT_SIZE)
+    _ = ax1.set_ylabel("Amplitude [dB]", fontsize=MATPLOTLIB_FONT_SIZE, color="#1f77b4")
+    _ = ax1.tick_params(axis="y", labelcolor="#1f77b4")
+    _ = ax1.grid(True, linestyle="--", alpha=0.4)
 
     ax2 = ax1.twinx()
-    ax2.plot(x_values, phase_values, color="#d62728", linewidth=2, linestyle="dotted", label=phase_label)
-    ax2.set_ylabel(phase_label, fontsize=MATPLOTLIB_FONT_SIZE, color="#d62728")
-    ax2.tick_params(axis="y", labelcolor="#d62728")
+    _ = ax2.plot(
+        x_values,
+        phase_values,
+        color="#d62728",
+        linewidth=2,
+        linestyle="dotted",
+        label=phase_label,
+    )
+    _ = ax2.set_ylabel(phase_label, fontsize=MATPLOTLIB_FONT_SIZE, color="#d62728")
+    _ = ax2.tick_params(axis="y", labelcolor="#d62728")
 
-    fig.suptitle(title, fontsize=MATPLOTLIB_TITLE_SIZE)
+    _ = fig.suptitle(title, fontsize=MATPLOTLIB_TITLE_SIZE)
     fig.tight_layout()
     plt.show()

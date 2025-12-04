@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from typing import Dict, List, Literal, TypedDict, Union
+from typing import Literal, TypedDict
 
 
 class ModeFitSeries(TypedDict):
-    L_jun: List[float]
-    Freq: List[float]
+    L_jun: list[float]
+    Freq: list[float]
 
 
 class ModeFitParams(TypedDict):
@@ -30,10 +30,10 @@ class ModeFitFailure(TypedDict):
     reason: str
 
 
-ModeFitResult = Union[ModeFitSuccess, ModeFitFailure]
+ModeFitResult = ModeFitSuccess | ModeFitFailure
 
 
-FitResultsByMode = Dict[str, ModeFitResult]
+FitResultsByMode = dict[str, ModeFitResult]
 
 
 class AnalysisEntry(TypedDict):
@@ -52,9 +52,9 @@ class Y11FitMetrics(TypedDict):
 
 
 class Y11FitSeries(TypedDict):
-    freq_ghz: List[float]
-    imag_y: List[float]
-    L_jun: List[float]
+    freq_ghz: list[float]
+    imag_y: list[float]
+    L_jun: list[float]
 
 
 class Y11FitSuccess(TypedDict):
@@ -70,7 +70,7 @@ class Y11FitFailure(TypedDict):
     reason: str
 
 
-Y11FitResult = Union[Y11FitSuccess, Y11FitFailure]
+Y11FitResult = Y11FitSuccess | Y11FitFailure
 
 
 __all__ = [

@@ -2,20 +2,26 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Optional
 
 from src.preprocess.loader import load_component_record
-from src.preprocess.schema import ComponentRecord, ParameterDataset, RawFileMeta, SourceType
+from src.preprocess.schema import (
+    ComponentRecord,
+    ParameterDataset,
+    RawFileMeta,
+    SourceType,
+)
 
 
-def load_existing_record(output_path: Path, component_id: str) -> Optional[ComponentRecord]:
+def load_existing_record(
+    output_path: Path, component_id: str
+) -> ComponentRecord | None:
     if not output_path.exists():
         return None
     record = load_component_record(output_path)
     if record.component_id != component_id:
         raise ValueError(
             f"Existing record {output_path} belongs to component '{record.component_id}', "
-            f"which does not match requested '{component_id}'."
+            + f"which does not match requested '{component_id}'."
         )
     return record
 
@@ -54,10 +60,13 @@ def write_component_record(record: ComponentRecord, output_path: Path) -> None:
 def _ensure_unique_dataset(record: ComponentRecord, dataset: ParameterDataset) -> None:
     signature = _dataset_signature(dataset)
     for existing in record.datasets:
-        if existing.dataset_id == dataset.dataset_id or _dataset_signature(existing) == signature:
+        if (
+            existing.dataset_id == dataset.dataset_id
+            or _dataset_signature(existing) == signature
+        ):
             raise ValueError(
                 f"Dataset '{dataset.dataset_id}' already exists in component '{record.component_id}'. "
-                "Skipping duplicate import."
+                + "Skipping duplicate import."
             )
 
 
