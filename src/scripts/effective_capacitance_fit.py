@@ -1,20 +1,17 @@
 from __future__ import annotations
 
 import argparse
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Optional, Sequence, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import plotly.graph_objects as go
+import plotly.graph_objects as go  # type: ignore
 
 from src.utils import (
     MATPLOTLIB_FONT_SIZE,
     MATPLOTLIB_TITLE_SIZE,
-    PLOTLY_FONT_SIZE,
-    PLOTLY_LEGEND_FONT_SIZE,
-    PLOTLY_TITLE_FONT_SIZE,
     RAW_ADMITTANCE_DIR,
     apply_plotly_layout,
     plotly_default_config,
@@ -28,17 +25,20 @@ DEFAULT_INPUT_FILES: Sequence[str] = [
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description=(
-            "Compute the equivalent capacitance per frequency sample assuming Im(Y)=ωC."
-        )
+        description=("Compute the equivalent capacitance per frequency sample assuming Im(Y)=ωC.")
     )
     parser.add_argument(
         "files",
         nargs="*",
         help="CSV files to analyze (defaults to PF6FQ dataset when omitted).",
     )
-    parser.add_argument("--freq-min", type=float, default=None, help="Minimum frequency (GHz) to include.")
-    parser.add_argument("--freq-max", type=float, default=None, help="Maximum frequency (GHz) to include.")
+    parser.add_argument(
+        "--freq-min", type=float, default=None, help="Minimum frequency (GHz) to include."
+    )
+    parser.add_argument(
+        "--freq-max", type=float, default=None, help="Maximum frequency (GHz) to include."
+    )
+
     parser.add_argument(
         "--title",
         default="Effective Capacitance Estimates",
@@ -57,7 +57,7 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def resolve_csv_path(candidate: str) -> Optional[Path]:
+def resolve_csv_path(candidate: str) -> Path | None:
     path = Path(candidate)
     if path.exists():
         return path
@@ -83,7 +83,7 @@ def infer_frequency_scale(column_name: str) -> float:
     return 1.0
 
 
-def extract_columns(df: pd.DataFrame) -> Optional[Tuple[str, str]]:
+def extract_columns(df: pd.DataFrame) -> tuple[str, str] | None:
     freq_cols = [col for col in df.columns if "freq" in col.lower()]
     if not freq_cols:
         print("[Error] Frequency column not found.")
@@ -103,9 +103,9 @@ def extract_columns(df: pd.DataFrame) -> Optional[Tuple[str, str]]:
 def apply_frequency_window(
     freq_ghz: np.ndarray,
     imag_y: np.ndarray,
-    freq_min: Optional[float],
-    freq_max: Optional[float],
-) -> Tuple[np.ndarray, np.ndarray]:
+    freq_min: float | None,
+    freq_max: float | None,
+) -> tuple[np.ndarray, np.ndarray]:
     mask = np.ones_like(freq_ghz, dtype=bool)
     if freq_min is not None:
         mask &= freq_ghz >= freq_min
@@ -129,8 +129,8 @@ def summarize_samples(freq_ghz: np.ndarray, imag_y: np.ndarray) -> pd.DataFrame:
 
 def analyze_file(
     csv_path: Path,
-    freq_min: Optional[float],
-    freq_max: Optional[float],
+    freq_min: float | None,
+    freq_max: float | None,
     show_plot: bool,
     use_matplotlib: bool,
     title: str,

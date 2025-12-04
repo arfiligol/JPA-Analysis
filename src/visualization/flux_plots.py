@@ -6,9 +6,9 @@ from typing import Literal
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import plotly.graph_objects as go
+import plotly.graph_objects as go  # type: ignore
 from matplotlib.axes import Axes
-from plotly.subplots import make_subplots
+from plotly.subplots import make_subplots  # type: ignore
 
 from src.utils import (
     MATPLOTLIB_FONT_SIZE,
@@ -105,9 +105,7 @@ def _render_plotly(
             y=freq,
             z=pivot.values,
             colorbar=dict(title=label.split()[0]),
-            colorscale=_PLOTLY_COLORSETS[
-                "amplitude" if view == "amplitude" else "phase"
-            ],
+            colorscale=_PLOTLY_COLORSETS["amplitude" if view == "amplitude" else "phase"],
             zsmooth="best",
             zmid=0.0 if view != "amplitude" else None,
         )

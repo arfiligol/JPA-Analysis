@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 import argparse
+from collections.abc import Sequence
 from pathlib import Path
-from typing import List, Optional, Sequence, Tuple, TypedDict
+from typing import TypedDict
 
 import matplotlib.pyplot as plt
 import pandas as pd
-import plotly.graph_objects as go
+import plotly.graph_objects as go  # type: ignore
 
 from src.extraction import extract_from_admittance
 from src.utils import (
@@ -29,7 +30,7 @@ class ComparisonFileConfig(ComparisonFileConfigRequired, total=False):
     linestyle: str
 
 
-DEFAULT_FILES: List[ComparisonFileConfig] = [
+DEFAULT_FILES: list[ComparisonFileConfig] = [
     {
         "path": RAW_ADMITTANCE_DIR / "LJPAL658_v3_Admittance_Imaginary_Part.csv",
         "label": "With Pump Line",
@@ -38,8 +39,7 @@ DEFAULT_FILES: List[ComparisonFileConfig] = [
         "linestyle": "-",
     },
     {
-        "path": RAW_ADMITTANCE_DIR
-        / "LJPAL658_v3_No_Pump_Line_Admittance_Imaginary_Part.csv",
+        "path": RAW_ADMITTANCE_DIR / "LJPAL658_v3_No_Pump_Line_Admittance_Imaginary_Part.csv",
         "label": "No Pump Line",
         "color": "tab:blue",
         "marker": "s",
@@ -86,8 +86,9 @@ def plot_dual_axis_comparison(
 
 def _load_comparison_data(
     file_list: Sequence[ComparisonFileConfig],
-) -> List[Tuple[ComparisonFileConfig, Optional[pd.DataFrame]]]:
-    loaded: List[Tuple[ComparisonFileConfig, Optional[pd.DataFrame]]] = []
+) -> list[tuple[ComparisonFileConfig, pd.DataFrame | None]]:
+    loaded: list[tuple[ComparisonFileConfig, pd.DataFrame | None]] = []
+
     for file_info in file_list:
         path = file_info["path"]
         label = file_info["label"]
@@ -101,7 +102,7 @@ def _load_comparison_data(
 
 
 def _plot_comparison_plotly(
-    datasets: Sequence[Tuple[ComparisonFileConfig, Optional[pd.DataFrame]]],
+    datasets: Sequence[tuple[ComparisonFileConfig, pd.DataFrame | None]],
     title: str,
 ) -> None:
     fig = go.Figure()
@@ -139,7 +140,7 @@ def _plot_comparison_plotly(
 
 
 def _plot_comparison_matplotlib(
-    datasets: Sequence[Tuple[ComparisonFileConfig, Optional[pd.DataFrame]]],
+    datasets: Sequence[tuple[ComparisonFileConfig, pd.DataFrame | None]],
     title: str,
 ) -> None:
     plt.figure(figsize=(10, 7))
@@ -180,7 +181,7 @@ def _plot_comparison_matplotlib(
 
 
 def _plot_dual_axis_plotly(
-    datasets: Sequence[Tuple[ComparisonFileConfig, Optional[pd.DataFrame]]],
+    datasets: Sequence[tuple[ComparisonFileConfig, pd.DataFrame | None]],
     title: str,
 ) -> None:
     fig = go.Figure()
@@ -227,10 +228,11 @@ def _plot_dual_axis_plotly(
 
 
 def _plot_dual_axis_matplotlib(
-    datasets: Sequence[Tuple[ComparisonFileConfig, Optional[pd.DataFrame]]],
+    datasets: Sequence[tuple[ComparisonFileConfig, pd.DataFrame | None]],
     title: str,
 ) -> None:
-    fig, ax1 = plt.subplots(figsize=(12, 7))
+    _, ax1 = plt.subplots(figsize=(12, 7))
+
     ax2 = ax1.twinx()
     lines = []
     for file_info, df in datasets:
@@ -264,9 +266,7 @@ def _plot_dual_axis_matplotlib(
             lines.append(l2)
     ax1.set_xlabel(r"Junction Inductance $L_{jun}$ [nH]", fontsize=MATPLOTLIB_FONT_SIZE)
     ax1.set_ylabel("Mode 1 Frequency [GHz] (Solid Line)", fontsize=MATPLOTLIB_FONT_SIZE)
-    ax2.set_ylabel(
-        "Mode 2 Frequency [GHz] (Dashed Line)", fontsize=MATPLOTLIB_FONT_SIZE
-    )
+    ax2.set_ylabel("Mode 2 Frequency [GHz] (Dashed Line)", fontsize=MATPLOTLIB_FONT_SIZE)
     ax1.grid(True, linestyle="--", alpha=0.5)
     labels = [line.get_label() for line in lines]
     ax1.legend(
@@ -309,8 +309,6 @@ def parse_args() -> argparse.Namespace:
 if __name__ == "__main__":
     args = parse_args()
     if args.dual_axis:
-        plot_dual_axis_comparison(
-            DEFAULT_FILES, title=args.title, use_matplotlib=args.matplotlib
-        )
+        plot_dual_axis_comparison(DEFAULT_FILES, title=args.title, use_matplotlib=args.matplotlib)
     else:
         plot_comparison(DEFAULT_FILES, title=args.title, use_matplotlib=args.matplotlib)

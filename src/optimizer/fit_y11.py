@@ -4,7 +4,7 @@ from typing import cast
 
 import numpy as np
 import pandas as pd
-from lmfit import Model
+from lmfit import Model  # type: ignore
 
 from src.models import y11_imaginary
 from src.types import Y11FitFailure, Y11FitResult, Y11FitSuccess

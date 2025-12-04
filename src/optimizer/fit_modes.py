@@ -1,20 +1,20 @@
 from __future__ import annotations
 
-from typing import Dict, List, Optional, Tuple, cast
+from typing import cast
 
 import numpy as np
 import pandas as pd
-from lmfit import Model, Parameter
+from lmfit import Model, Parameter  # type: ignore
 
 from src.models.squid_model import squid_lc_frequency
 from src.types import FitResultsByMode, ModeFitFailure, ModeFitSuccess
 
-ParameterBounds = Dict[str, Tuple[Optional[float], Optional[float]]]
+ParameterBounds = dict[str, tuple[float | None, float | None]]
 
 
 def fit_resonant_modes(
     df_modes: pd.DataFrame,
-    parameter_bounds: Optional[ParameterBounds] = None,
+    parameter_bounds: ParameterBounds | None = None,
 ) -> FitResultsByMode:
     """
     Fits the SQUID LC model to each Mode column in the DataFrame.
@@ -29,7 +29,7 @@ def fit_resonant_modes(
 def fit_resonant_modes_fixed_capacitance(
     df_modes: pd.DataFrame,
     capacitance_pf: float,
-    parameter_bounds: Optional[ParameterBounds] = None,
+    parameter_bounds: ParameterBounds | None = None,
 ) -> FitResultsByMode:
     """
     Fit modes while holding the capacitance parameter fixed.
@@ -43,15 +43,15 @@ def fit_resonant_modes_fixed_capacitance(
 
 def _fit_resonant_modes(
     df_modes: pd.DataFrame,
-    fixed_capacitance_pf: Optional[float],
-    parameter_bounds: Optional[ParameterBounds],
+    fixed_capacitance_pf: float | None,
+    parameter_bounds: ParameterBounds | None,
 ) -> FitResultsByMode:
     if df_modes is None or df_modes.empty:
         print("[Error] Input DataFrame is empty.")
         return {}
 
     results: FitResultsByMode = {}
-    mode_cols: List[str] = [c for c in df_modes.columns if "Mode" in c]
+    mode_cols: list[str] = [c for c in df_modes.columns if "Mode" in c]
 
     if not mode_cols:
         print("[Warning] No Mode columns found.")
@@ -59,11 +59,7 @@ def _fit_resonant_modes(
 
     x_data_all: np.ndarray = cast(np.ndarray, df_modes["L_jun"].values)
 
-    suffix = (
-        ""
-        if fixed_capacitance_pf is None
-        else f" (C fixed at {fixed_capacitance_pf:.4f} pF)"
-    )
+    suffix = "" if fixed_capacitance_pf is None else f" (C fixed at {fixed_capacitance_pf:.4f} pF)"
     print(f"Starting fitting analysis for {len(mode_cols)} modes{suffix}...")
 
     for mode_name in mode_cols:
@@ -99,7 +95,7 @@ def _fit_resonant_modes(
             C_fit = result.params["C_pF"].value
 
             # Evaluate at the raw sample points for reporting.
-            y_pred_all = result.eval(params=result.params, L_jun=x_data_all)
+            _ = result.eval(params=result.params, L_jun=x_data_all)
 
             # Generate a dense grid for plotting so the curve looks smooth.
             if len(x_data_all) >= 2:
@@ -118,8 +114,8 @@ def _fit_resonant_modes(
                 "params": {"Ls_nH": float(Ls_fit), "C_eff_pF": float(C_fit)},
                 "metrics": {"RMSE": float(rmse)},
                 "raw_data": {
-                    "L_jun": cast(List[float], df_clean["L_jun"].tolist()),
-                    "Freq": cast(List[float], df_clean[mode_name].tolist()),
+                    "L_jun": cast(list[float], df_clean["L_jun"].tolist()),
+                    "Freq": cast(list[float], df_clean[mode_name].tolist()),
                 },
                 "fit_curve": {
                     "L_jun": x_curve.tolist(),
@@ -140,9 +136,7 @@ def _fit_resonant_modes(
     return results
 
 
-def _apply_bounds(
-    param: Parameter, bounds: Optional[ParameterBounds], name: str
-) -> None:
+def _apply_bounds(param: Parameter, bounds: ParameterBounds | None, name: str) -> None:
     if not bounds:
         return
     if name not in bounds:

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-import plotly.graph_objects as go
+import plotly.graph_objects as go  # type: ignore
 
 MATPLOTLIB_FONT_SIZE = 16
 MATPLOTLIB_TITLE_SIZE = 28

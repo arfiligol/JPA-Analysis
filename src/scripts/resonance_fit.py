@@ -1,18 +1,17 @@
 from __future__ import annotations
 
 import argparse
+from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional, Sequence, TypedDict
+from typing import TypedDict
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import plotly.graph_objects as go
+import plotly.graph_objects as go  # type: ignore
 
 from src.utils import (
-    MATPLOTLIB_FONT_SIZE,
-    MATPLOTLIB_TITLE_SIZE,
     PROCESSED_REPORTS_DIR,
     RAW_ADMITTANCE_DIR,
     apply_plotly_layout,
@@ -22,7 +21,7 @@ from src.utils import (
 
 class ModeEntry(TypedDict):
     L_jun: float
-    Modes: List[float]
+    Modes: list[float]
 
 
 @dataclass
@@ -33,7 +32,7 @@ class FitParameters:
     l_sum_h: float
 
 
-FILES_TO_ANALYZE: Dict[str, str] = {
+FILES_TO_ANALYZE: dict[str, str] = {
     "v3_with_pump": "LJPAL658_v3_Im_Y11.csv",
     "v2_im_y11": "LJPAL658_v2_Im_Y11.csv",
 }
@@ -44,7 +43,7 @@ PLOTS_DIR: Path = PROCESSED_REPORTS_DIR / "resonance_fits"
 PLOTS_DIR.mkdir(parents=True, exist_ok=True)
 
 
-def load_and_standardize(name: str, filename: str) -> Optional[pd.DataFrame]:
+def load_and_standardize(name: str, filename: str) -> pd.DataFrame | None:
     csv_path = RAW_ADMITTANCE_DIR / filename
     if not csv_path.exists():
         print(f"[Warning] {name}: file not found ({csv_path})")
@@ -55,7 +54,8 @@ def load_and_standardize(name: str, filename: str) -> Optional[pd.DataFrame]:
         print(f"[Warning] {name}: failed to read CSV ({exc})")
         return None
 
-    col_map: Dict[str, str] = {}
+    col_map: dict[str, str] = {}
+
     for col in df.columns:
         lower = col.lower()
         if "l_jun" in lower:
@@ -74,14 +74,16 @@ def load_and_standardize(name: str, filename: str) -> Optional[pd.DataFrame]:
     return standardized
 
 
-def extract_modes(df: pd.DataFrame) -> List[ModeEntry]:
-    mode_entries: List[ModeEntry] = []
+def extract_modes(df: pd.DataFrame) -> list[ModeEntry]:
+    mode_entries: list[ModeEntry] = []
+
     for l_val in sorted(df["L_jun"].unique()):
         subset = df[df["L_jun"] == l_val].sort_values("Freq_GHz")
         freqs = subset["Freq_GHz"].to_numpy(dtype=float)
         admittance = subset["ImY"].to_numpy(dtype=float)
 
-        crossings: List[float] = []
+        crossings: list[float] = []
+
         for idx in range(len(freqs) - 1):
             y1 = admittance[idx]
             y2 = admittance[idx + 1]
@@ -99,7 +101,7 @@ def clean_modes(modes: Sequence[ModeEntry]) -> pd.DataFrame:
     for entry in modes:
         l_val = entry["L_jun"]
         mode1 = np.nan
-        mode2_values: List[float] = []
+        mode2_values: list[float] = []
 
         for freq in entry["Modes"]:
             if freq < MODE1_THRESHOLD_GHZ:
@@ -115,7 +117,7 @@ def clean_modes(modes: Sequence[ModeEntry]) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-def fit_parameters(df_modes: pd.DataFrame) -> Optional[FitParameters]:
+def fit_parameters(df_modes: pd.DataFrame) -> FitParameters | None:
     valid = df_modes.dropna(subset=["Mode1"])
     if len(valid) < 2:
         return None
@@ -134,17 +136,22 @@ def fit_parameters(df_modes: pd.DataFrame) -> Optional[FitParameters]:
     else:
         freq_avg = valid_m2["Mode2"].mean() * 1e9
         omega2 = 2.0 * np.pi * freq_avg
-        ls1 = 1.0 / (omega2 ** 2 * capacitance)
+        ls1 = 1.0 / (omega2**2 * capacitance)
 
     ls2 = l_sum - ls1
-    return FitParameters(capacitance_F=float(capacitance), ls1_h=float(ls1), ls2_h=float(ls2), l_sum_h=float(l_sum))
+    return FitParameters(
+        capacitance_F=float(capacitance),
+        ls1_h=float(ls1),
+        ls2_h=float(ls2),
+        l_sum_h=float(l_sum),
+    )
 
 
 def plot_dataset(
     name: str,
     raw_modes: Sequence[ModeEntry],
     df_modes: pd.DataFrame,
-    params: Optional[FitParameters],
+    params: FitParameters | None,
     use_matplotlib: bool,
 ) -> None:
     if use_matplotlib:
@@ -157,22 +164,45 @@ def _plot_dataset_matplotlib(
     name: str,
     raw_modes: Sequence[ModeEntry],
     df_modes: pd.DataFrame,
-    params: Optional[FitParameters],
+    params: FitParameters | None,
 ) -> None:
     plt.figure(figsize=(10, 8))
 
-    plt.scatter(df_modes["L_jun"], df_modes["Mode1"], color="tab:blue", label="Mode 1 (JPA)", s=60, zorder=3)
-    plt.scatter(df_modes["L_jun"], df_modes["Mode2"], color="tab:red", label="Mode 2 (SRF avg)", s=60, zorder=3)
+    plt.scatter(
+        df_modes["L_jun"],
+        df_modes["Mode1"],
+        color="tab:blue",
+        label="Mode 1 (JPA)",
+        s=60,
+        zorder=3,
+    )
+    plt.scatter(
+        df_modes["L_jun"],
+        df_modes["Mode2"],
+        color="tab:red",
+        label="Mode 2 (SRF avg)",
+        s=60,
+        zorder=3,
+    )
 
-    raw_x: List[float] = []
-    raw_y: List[float] = []
+    raw_x: list[float] = []
+    raw_y: list[float] = []
+
     for entry in raw_modes:
         for freq in entry["Modes"]:
             if freq > MODE1_THRESHOLD_GHZ:
                 raw_x.append(entry["L_jun"])
                 raw_y.append(freq)
     if raw_x:
-        plt.scatter(raw_x, raw_y, color="tab:red", alpha=0.3, s=15, label="Raw mode splitting", zorder=2)
+        plt.scatter(
+            raw_x,
+            raw_y,
+            color="tab:red",
+            alpha=0.3,
+            s=15,
+            label="Raw mode splitting",
+            zorder=2,
+        )
 
     if params:
         l_values = np.linspace(df_modes["L_jun"].min(), df_modes["L_jun"].max(), 200)
@@ -184,7 +214,13 @@ def _plot_dataset_matplotlib(
         if params.ls1_h > 0.0:
             omega_curve2 = 1.0 / np.sqrt(params.capacitance_F * params.ls1_h)
             freq_curve2 = omega_curve2 / (2.0 * np.pi) * 1e-9
-            plt.axhline(freq_curve2, color="tab:red", linestyle="--", linewidth=2, label=f"Fit: SRF ({freq_curve2:.2f} GHz)")
+            plt.axhline(
+                freq_curve2,
+                color="tab:red",
+                linestyle="--",
+                linewidth=2,
+                label=f"Fit: SRF ({freq_curve2:.2f} GHz)",
+            )
 
         text_lines = [
             f"Dataset: {name}",
@@ -219,7 +255,7 @@ def _plot_dataset_plotly(
     name: str,
     raw_modes: Sequence[ModeEntry],
     df_modes: pd.DataFrame,
-    params: Optional[FitParameters],
+    params: FitParameters | None,
 ) -> None:
     fig = go.Figure()
     fig.add_trace(
@@ -240,8 +276,9 @@ def _plot_dataset_plotly(
             marker=dict(color="rgb(214,39,40)", size=10),
         )
     )
-    raw_x: List[float] = []
-    raw_y: List[float] = []
+    raw_x: list[float] = []
+    raw_y: list[float] = []
+
     for entry in raw_modes:
         for freq in entry["Modes"]:
             if freq > MODE1_THRESHOLD_GHZ:
@@ -257,8 +294,8 @@ def _plot_dataset_plotly(
                 marker=dict(color="rgba(214,39,40,0.4)", size=6),
             )
         )
-    annotations: List[Dict[str, object]] = []
-    output_suffix = ".html"
+    annotations: list[dict[str, object]] = []
+
     if params:
         l_values = np.linspace(df_modes["L_jun"].min(), df_modes["L_jun"].max(), 200)
         l_h = l_values * 1e-9

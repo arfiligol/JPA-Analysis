@@ -42,9 +42,7 @@ def parse_args() -> FluxDependenceArgs:
         type=Path,
         help="Path(s) to flux dependence TXT (defaults to DEFAULT_FILES).",
     )
-    _ = parser.add_argument(
-        "--component-id", help="Override component identifier for the record."
-    )
+    _ = parser.add_argument("--component-id", help="Override component identifier for the record.")
     _ = parser.add_argument(
         "--output",
         type=Path,
@@ -102,7 +100,7 @@ def read_flux_file(path: Path) -> tuple[pd.DataFrame, float | None]:
         phase_slice = parts[1 + bias_count : 1 + 2 * bias_count]
         amplitudes = [float(value) for value in amp_slice]
         phases = [float(value) for value in phase_slice]
-        for bias_mA, amp_db, phase_deg in zip(bias_values, amplitudes, phases):
+        for bias_mA, amp_db, phase_deg in zip(bias_values, amplitudes, phases, strict=True):
             records.append(
                 {
                     "Frequency_GHz": freq_ghz,

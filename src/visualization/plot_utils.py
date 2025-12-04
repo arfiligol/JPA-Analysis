@@ -4,7 +4,7 @@ import re
 from collections.abc import Sequence
 
 import matplotlib.pyplot as plt
-import plotly.graph_objects as go
+import plotly.graph_objects as go  # type: ignore
 
 from src.types import AnalysisEntry
 from src.utils import (
