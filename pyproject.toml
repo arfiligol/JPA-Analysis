@@ -1,0 +1,83 @@
+[project]
+name = "JPA_Analysis"
+version = "0.1.0"
+description = "SQUID JPA analysis pipeline"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "ipython>=9.7.0",
+    "lmfit>=1.3.1",
+    "matplotlib>=3.10.7",
+    "numpy>=2.3.5",
+    "pandas>=2.3.3",
+    "plotly>=5.22.0",
+    "pydantic>=2.12.5",
+    "scipy>=1.16.3",
+]
+
+[project.optional-dependencies]
+dev = [
+    "basedpyright>=1.35.0",
+    "ruff>=0.4.10",
+]
+
+[project.scripts]
+squid-model-fit = "src.scripts.admittance_fit:run"
+squid-model-fit-fixed-c = "src.scripts.admittance_fit_with_fixed_c:run"
+effective-capacitance-fit = "src.scripts.effective_capacitance_fit:run"
+flux-dependence-plot = "src.scripts.flux_dependence_plot:run"
+convert-hfss-admittance = "src.preprocess.convert_hfss_admittance:main"
+convert-hfss-phase = "src.preprocess.convert_hfss_phase:main"
+convert-flux-dependence = "src.preprocess.convert_flux_dependence:main"
+
+[tool.uv]
+package = true
+
+[tool.basedpyright]
+typeCheckingMode = "standard"
+pythonVersion = "3.12"
+include = ["src", "main.py"]
+exclude = [
+    "**/__pycache__",
+    ".venv",
+    "build",
+    "data",
+]
+extraPaths = ["src"]
+reportMissingTypeStubs = "warning"
+executionEnvironments = [
+    { root = "src" },
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["src"]
+extend-exclude = [
+    ".venv",
+    "build",
+    "data",
+]
+
+[tool.ruff.lint]
+select = [
+    "E",
+    "F",
+    "I",
+    "B",
+    "UP",
+    "RUF",
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["src"]
+
+[tool.ruff.format]
+docstring-code-format = true
+
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["src*"]

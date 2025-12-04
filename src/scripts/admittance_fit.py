@@ -37,7 +37,7 @@ DEFAULT_COMPONENT_IDS: Sequence[str] = [
 
 # Specify which extracted modes should be plotted/highlighted.
 # Use None/empty to plot every available mode.
-DEFAULT_MODES_TO_PLOT: Sequence[str] = ["Mode 1", "Mode 2"]
+DEFAULT_MODES_TO_PLOT: Sequence[str] = ["Mode 1"]
 
 # Default parameter bounds (None indicates no bound).
 DEFAULT_FIT_BOUNDS: dict[str, tuple[float | None, float | None]] = {
@@ -59,9 +59,7 @@ class AdmittanceFitArgs(NamedTuple):
 
 def parse_args() -> AdmittanceFitArgs:
     parser = argparse.ArgumentParser(
-        description=(
-            "Batch analysis of admittance datasets stored under data/preprocessed/."
-        )
+        description=("Batch analysis of admittance datasets stored under data/preprocessed/.")
     )
     _ = parser.add_argument(
         "components",
@@ -78,18 +76,10 @@ def parse_args() -> AdmittanceFitArgs:
         default="SQUID JPA Mode Fits",
         help="Custom title for the plot window.",
     )
-    _ = parser.add_argument(
-        "--ls-min", type=float, default=None, help="Lower bound for Ls (nH)."
-    )
-    _ = parser.add_argument(
-        "--ls-max", type=float, default=None, help="Upper bound for Ls (nH)."
-    )
-    _ = parser.add_argument(
-        "--c-min", type=float, default=None, help="Lower bound for C (pF)."
-    )
-    _ = parser.add_argument(
-        "--c-max", type=float, default=None, help="Upper bound for C (pF)."
-    )
+    _ = parser.add_argument("--ls-min", type=float, default=None, help="Lower bound for Ls (nH).")
+    _ = parser.add_argument("--ls-max", type=float, default=None, help="Upper bound for Ls (nH).")
+    _ = parser.add_argument("--c-min", type=float, default=None, help="Lower bound for C (pF).")
+    _ = parser.add_argument("--c-max", type=float, default=None, help="Upper bound for C (pF).")
     _ = parser.add_argument(
         "--matplotlib",
         action="store_true",
@@ -186,9 +176,7 @@ def analyze_file(
     print(f"\n=== Processing {component_path.stem} ===")
     df_modes = extract_modes(component_path)
     if df_modes is None or df_modes.empty:
-        print(
-            f"  > Extraction failed or returned empty results for {component_path.stem}"
-        )
+        print(f"  > Extraction failed or returned empty results for {component_path.stem}")
         return None
 
     print_dataframe_table("Extracted Resonant Modes", df_modes)
@@ -203,12 +191,8 @@ def analyze_file(
 def run() -> None:
     args = parse_args()
 
-    file_list: Sequence[str] = (
-        args.components if args.components else DEFAULT_COMPONENT_IDS
-    )
-    modes_to_plot: Sequence[str] | None = (
-        args.modes if args.modes else DEFAULT_MODES_TO_PLOT
-    )
+    file_list: Sequence[str] = args.components if args.components else DEFAULT_COMPONENT_IDS
+    modes_to_plot: Sequence[str] | None = args.modes if args.modes else DEFAULT_MODES_TO_PLOT
     parameter_bounds = _build_bounds(args)
     plot_title = args.title
     use_matplotlib = args.matplotlib

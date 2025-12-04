@@ -23,10 +23,12 @@ from src.visualization import plot_json_results, print_dataframe_table
 # ---------------------------------------------------------------------------
 
 DEFAULT_COMPONENT_IDS: Sequence[str] = [
-    "LJPAL6574_B46D1",
+    "LJPAL658_v1",
+    "LJPAL658_v2",
+    "LJPAL658_v3",
 ]
 DEFAULT_MODES_TO_PLOT: Sequence[str] = ["Mode 1"]
-DEFAULT_CAPACITANCE_PF: float = 2.67
+DEFAULT_CAPACITANCE_PF: float = 0.885
 
 
 def parse_args() -> tuple[Sequence[str], Sequence[str] | None, str, float, bool]:
@@ -64,12 +66,8 @@ def parse_args() -> tuple[Sequence[str], Sequence[str] | None, str, float, bool]
     )
     args = parser.parse_args()
 
-    file_list: Sequence[str] = (
-        args.components if args.components else DEFAULT_COMPONENT_IDS
-    )
-    mode_list: Sequence[str] | None = (
-        args.modes if args.modes else DEFAULT_MODES_TO_PLOT
-    )
+    file_list: Sequence[str] = args.components if args.components else DEFAULT_COMPONENT_IDS
+    mode_list: Sequence[str] | None = args.modes if args.modes else DEFAULT_MODES_TO_PLOT
     return (
         file_list,
         mode_list,
@@ -146,19 +144,13 @@ def analyze_file(
     print(f"\n=== Processing {component_path.stem} ===")
     df_modes = extract_modes(component_path)
     if df_modes is None or df_modes.empty:
-        print(
-            f"  > Extraction failed or returned empty results for {component_path.stem}"
-        )
+        print(f"  > Extraction failed or returned empty results for {component_path.stem}")
         return None
 
     print_dataframe_table("Extracted Resonant Modes", df_modes)
 
-    fit_results = fit_resonant_modes_fixed_capacitance(
-        df_modes, capacitance_pf=capacitance_pf
-    )
-    print_fit_summary(
-        component_path.stem, fit_results, modes_to_highlight, capacitance_pf
-    )
+    fit_results = fit_resonant_modes_fixed_capacitance(df_modes, capacitance_pf=capacitance_pf)
+    print_fit_summary(component_path.stem, fit_results, modes_to_highlight, capacitance_pf)
 
     entry: AnalysisEntry = {"filename": component_path.stem, "fits": fit_results}
     return entry
