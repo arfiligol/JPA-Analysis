@@ -61,7 +61,7 @@ Raw inputs live under `data/raw/`, grouped by source type (measurement, circuit 
 - `data/raw/circuit_simulation/` and `data/raw/layout_simulation/`: Reserved for future HFSS/Sonnet pipeline outputs.
 - `data/processed/reports/`: Generated analysis artifacts, e.g., `analysis_result.json`.
 
-Use the helper constants in `src/utils/paths.py` (`RAW_ADMITTANCE_DIR`, `RAW_PHASE_DIR`, `RAW_FLUX_DEPENDENCE_DIR`, `PROCESSED_REPORTS_DIR`) to reference these folders in code so future refactors do not require hard-coded paths.
+Use the helper constants in `src/utils/paths.py` (`RAW_LAYOUT_ADMITTANCE_DIR`, `RAW_LAYOUT_PHASE_DIR`, `RAW_MEASUREMENT_FLUX_DEPENDENCE_DIR`, `PROCESSED_REPORTS_DIR`) to reference these folders in code so future refactors do not require hard-coded paths.
 
 ## Utility Scripts
 

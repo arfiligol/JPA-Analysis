@@ -13,7 +13,7 @@ import plotly.graph_objects as go  # type: ignore
 
 from src.utils import (
     PROCESSED_REPORTS_DIR,
-    RAW_ADMITTANCE_DIR,
+    RAW_LAYOUT_ADMITTANCE_DIR,
     apply_plotly_layout,
     plotly_default_config,
 )
@@ -44,7 +44,7 @@ PLOTS_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def load_and_standardize(name: str, filename: str) -> pd.DataFrame | None:
-    csv_path = RAW_ADMITTANCE_DIR / filename
+    csv_path = RAW_LAYOUT_ADMITTANCE_DIR / filename
     if not csv_path.exists():
         print(f"[Warning] {name}: file not found ({csv_path})")
         return None

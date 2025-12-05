@@ -17,7 +17,7 @@ from src.preprocess.schema import (
     ParameterRepresentation,
     SourceType,
 )
-from src.utils import DATA_DIR, RAW_FLUX_DEPENDENCE_DIR
+from src.utils import DATA_DIR, RAW_MEASUREMENT_FLUX_DEPENDENCE_DIR
 
 PREPROCESSED_DIR = DATA_DIR / "preprocessed"
 DEFAULT_FILES: Sequence[str] = [
@@ -167,7 +167,7 @@ def main() -> None:
 
     for raw_path in input_files:
         if not raw_path.exists():
-            candidate = RAW_FLUX_DEPENDENCE_DIR / raw_path
+            candidate = RAW_MEASUREMENT_FLUX_DEPENDENCE_DIR / raw_path
             if candidate.exists():
                 raw_path = candidate
             else:

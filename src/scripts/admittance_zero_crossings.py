@@ -1,13 +1,13 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import List, cast
+from typing import cast
 
 import numpy as np
 import pandas as pd
 from IPython.display import display
 
-from src.utils import RAW_ADMITTANCE_DIR
+from src.utils import RAW_LAYOUT_ADMITTANCE_DIR
 
 
 def zero_crosses(
@@ -24,7 +24,7 @@ def zero_crosses(
         return crossing_rows
 
     idx = crossing_rows.index
-    freqs: List[float] = []
+    freqs: list[float] = []
     for i in idx:
         pos = cast(int, group.index.get_loc(i))
         if sign.loc[i] == 0 or pos == len(group) - 1:
@@ -40,7 +40,7 @@ def zero_crosses(
 
 
 def main() -> None:
-    data_file: Path = RAW_ADMITTANCE_DIR / "LJPAL658_v2_Admittance_Imaginary_Part.csv"
+    data_file: Path = RAW_LAYOUT_ADMITTANCE_DIR / "LJPAL658_v2_Admittance_Imaginary_Part.csv"
     df = pd.read_csv(data_file)
     display(df.head(0))
 

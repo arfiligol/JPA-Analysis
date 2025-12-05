@@ -31,8 +31,9 @@ DEFAULT_COMPONENT_IDS: Sequence[str] = [
     # "LJPAL658_v1_No_Pump_Line",
     # "LJPAL658_v2_No_Pump_Line",
     # "LJPAL658_v3_No_Pump_Line",
-    # "LJPAL6574_B46D1",
-    # "LJPAL6572_B46D2",
+    "LJPAL6574_B46D1",
+    "LJPAL6572_B46D1",
+    "LJPAL6572_B46D2",
 ]
 
 # Specify which extracted modes should be plotted/highlighted.

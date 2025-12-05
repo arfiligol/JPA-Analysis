@@ -11,7 +11,7 @@ import plotly.graph_objects as go  # type: ignore
 from src.utils import (
     MATPLOTLIB_FONT_SIZE,
     MATPLOTLIB_TITLE_SIZE,
-    RAW_PHASE_DIR,
+    RAW_LAYOUT_PHASE_DIR,
     apply_plotly_layout,
     plotly_default_config,
 )
@@ -174,7 +174,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--file",
         type=Path,
-        default=RAW_PHASE_DIR / "No_Pump_Line_S11_cang_deg.csv",
+        default=RAW_LAYOUT_PHASE_DIR / "No_Pump_Line_S11_cang_deg.csv",
         help="Phase CSV to analyze (default: No_Pump_Line file).",
     )
     parser.add_argument("--freq-min", type=float, default=1.0, help="Minimum frequency in GHz.")

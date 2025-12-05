@@ -12,7 +12,7 @@ import plotly.graph_objects as go  # type: ignore
 from src.utils import (
     MATPLOTLIB_FONT_SIZE,
     MATPLOTLIB_TITLE_SIZE,
-    RAW_ADMITTANCE_DIR,
+    RAW_LAYOUT_ADMITTANCE_DIR,
     apply_plotly_layout,
     plotly_default_config,
 )
@@ -62,7 +62,7 @@ def resolve_csv_path(candidate: str) -> Path | None:
     if path.exists():
         return path
 
-    fallback = RAW_ADMITTANCE_DIR / candidate
+    fallback = RAW_LAYOUT_ADMITTANCE_DIR / candidate
     if fallback.exists():
         return fallback
 

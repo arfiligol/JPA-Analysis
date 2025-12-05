@@ -30,6 +30,7 @@ flux-dependence-plot = "src.scripts.flux_dependence_plot:run"
 convert-hfss-admittance = "src.preprocess.convert_hfss_admittance:main"
 convert-hfss-phase = "src.preprocess.convert_hfss_phase:main"
 convert-flux-dependence = "src.preprocess.convert_flux_dependence:main"
+plot-admittance = "src.scripts.plot_admittance:run"
 
 [tool.uv]
 package = true
@@ -79,8 +80,16 @@ build-backend = "setuptools.build_meta"
 [dependency-groups]
 dev = [
     "basedpyright>=1.35.0",
+    "pytest>=9.0.1",
+    "pytest-cov>=7.0.0",
     "ruff>=0.14.7",
 ]
 
 [tool.setuptools.packages.find]
 include = ["src*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-v --cov=src --cov-report=term-missing"
+

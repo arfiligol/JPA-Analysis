@@ -13,7 +13,7 @@ from src.extraction import extract_from_admittance
 from src.utils import (
     MATPLOTLIB_FONT_SIZE,
     MATPLOTLIB_TITLE_SIZE,
-    RAW_ADMITTANCE_DIR,
+    RAW_LAYOUT_ADMITTANCE_DIR,
     apply_plotly_layout,
     plotly_default_config,
 )
@@ -32,14 +32,15 @@ class ComparisonFileConfig(ComparisonFileConfigRequired, total=False):
 
 DEFAULT_FILES: list[ComparisonFileConfig] = [
     {
-        "path": RAW_ADMITTANCE_DIR / "LJPAL658_v3_Admittance_Imaginary_Part.csv",
+        "path": RAW_LAYOUT_ADMITTANCE_DIR / "LJPAL658_v3_Admittance_Imaginary_Part.csv",
         "label": "With Pump Line",
         "color": "tab:red",
         "marker": "o",
         "linestyle": "-",
     },
     {
-        "path": RAW_ADMITTANCE_DIR / "LJPAL658_v3_No_Pump_Line_Admittance_Imaginary_Part.csv",
+        "path": RAW_LAYOUT_ADMITTANCE_DIR
+        / "LJPAL658_v3_No_Pump_Line_Admittance_Imaginary_Part.csv",
         "label": "No Pump Line",
         "color": "tab:blue",
         "marker": "s",

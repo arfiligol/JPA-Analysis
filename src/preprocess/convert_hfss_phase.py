@@ -18,7 +18,7 @@ from src.preprocess.schema import (
     RawFileMeta,
     SourceType,
 )
-from src.utils import DATA_DIR, RAW_PHASE_DIR
+from src.utils import DATA_DIR, RAW_LAYOUT_PHASE_DIR
 
 PREPROCESSED_DIR = DATA_DIR / "preprocessed"
 DEFAULT_FILES: Sequence[str] = ["LJPAL658_v3_S11_Phase_Deg.csv"]
@@ -32,18 +32,14 @@ def detect_columns(df: pd.DataFrame) -> tuple[str, str, str]:
     if not freq_cols:
         raise ValueError("Unable to locate frequency column.")
     phase_cols = [
-        c
-        for c in df.columns
-        if "phase" in c.lower() or "deg(" in c.lower() or "cang" in c.lower()
+        c for c in df.columns if "phase" in c.lower() or "deg(" in c.lower() or "cang" in c.lower()
     ]
     if not phase_cols:
         raise ValueError("Unable to locate phase column.")
     return l_cols[0], freq_cols[0], phase_cols[0]
 
 
-def reshape_matrix(
-    df: pd.DataFrame, l_col: str, freq_col: str, phase_col: str
-) -> pd.DataFrame:
+def reshape_matrix(df: pd.DataFrame, l_col: str, freq_col: str, phase_col: str) -> pd.DataFrame:
     pivot = df.pivot(index=freq_col, columns=l_col, values=phase_col).sort_index()
     pivot = pivot[sorted(pivot.columns)]
     return pivot
@@ -97,9 +93,7 @@ class HFSSArgs(argparse.Namespace):
 
 
 def parse_args() -> HFSSArgs:
-    parser = argparse.ArgumentParser(
-        description="Convert HFSS phase CSV to preprocessed JSON."
-    )
+    parser = argparse.ArgumentParser(description="Convert HFSS phase CSV to preprocessed JSON.")
     parser.add_argument(
         "csv",
         nargs="*",
@@ -123,7 +117,7 @@ def main() -> None:
 
     for raw_path in input_files:
         if not raw_path.exists():
-            candidate = RAW_PHASE_DIR / raw_path
+            candidate = RAW_LAYOUT_PHASE_DIR / raw_path
             if candidate.exists():
                 raw_path = candidate
             else:
@@ -135,9 +129,7 @@ def main() -> None:
         pivot_deg = reshape_matrix(df, l_col, freq_col, phase_col)
         pivot_rad = convert_to_radians(pivot_deg)
         component_id = determine_component_id(raw_path, args.component_id)
-        record = build_component_record(
-            component_id, pivot_rad, raw_path, parameter_name="S11"
-        )
+        record = build_component_record(component_id, pivot_rad, raw_path, parameter_name="S11")
 
         output_path = args.output or (PREPROCESSED_DIR / f"{component_id}.json")
         merged = upsert_component_record(

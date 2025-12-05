@@ -18,13 +18,16 @@ from src.preprocess.schema import (
     RawFileMeta,
     SourceType,
 )
-from src.utils import DATA_DIR, RAW_ADMITTANCE_DIR
+from src.utils import DATA_DIR, RAW_LAYOUT_ADMITTANCE_DIR
 
 PREPROCESSED_DIR = DATA_DIR / "preprocessed"
 DEFAULT_FILES: Sequence[str] = [
-    "LJPAL658_v1_Im_Y11.csv",
-    "LJPAL658_v2_Im_Y11.csv",
-    "LJPAL658_v3_Im_Y11.csv",
+    # "LJPAL658_v1_Im_Y11.csv",
+    # "LJPAL658_v2_Im_Y11.csv",
+    # "LJPAL658_v3_Im_Y11.csv",
+    "LJPAL6572_B46D1_Im_Y11.csv",
+    "LJPAL6572_B46D2_Im_Y11.csv",
+    "LJPAL6574_B46D1_Im_Y11.csv",
 ]
 
 
@@ -41,9 +44,7 @@ def detect_columns(df: pd.DataFrame) -> tuple[str, str, str]:
     return l_cols[0], freq_cols[0], y_cols[0]
 
 
-def reshape_matrix(
-    df: pd.DataFrame, l_col: str, freq_col: str, y_col: str
-) -> pd.DataFrame:
+def reshape_matrix(df: pd.DataFrame, l_col: str, freq_col: str, y_col: str) -> pd.DataFrame:
     pivot = df.pivot(index=freq_col, columns=l_col, values=y_col).sort_index()
     pivot = pivot[sorted(pivot.columns)]
     return pivot
@@ -69,9 +70,7 @@ def build_component_record(
     parameter_name: str,
 ) -> ComponentRecord:
     frequency_axis = ParameterAxis(name="Freq", unit="GHz", values=pivot.index.tolist())
-    bias_axis = ParameterAxis(
-        name="L_jun", unit="nH", values=[float(x) for x in pivot.columns]
-    )
+    bias_axis = ParameterAxis(name="L_jun", unit="nH", values=[float(x) for x in pivot.columns])
 
     dataset = ParameterDataset(
         dataset_id=f"{component_id}-{parameter_name}-imag",
@@ -133,7 +132,7 @@ def main() -> None:
 
     for raw_path in input_files:
         if not raw_path.exists():
-            candidate = RAW_ADMITTANCE_DIR / raw_path
+            candidate = RAW_LAYOUT_ADMITTANCE_DIR / raw_path
             if candidate.exists():
                 raw_path = candidate
             else:

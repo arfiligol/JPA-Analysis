@@ -26,7 +26,7 @@ Run the shared tooling locally before submitting changes.
 Protect raw data and respect the canonical directory structure.
 
 - **Read-Only Raw Inputs**: Treat everything under `data/raw/` as immutable. Preprocessed artifacts belong in `data/preprocessed/`, analysis outputs in `data/processed/reports/`.
-- **Shared Path Helpers**: Use the constants in `src/utils/paths.py` (`RAW_ADMITTANCE_DIR`, `PROCESSED_REPORTS_DIR`, etc.) instead of hard-coded paths to keep scripts portable.
+- **Shared Path Helpers**: Use the constants in `src/utils/paths.py` (`RAW_LAYOUT_ADMITTANCE_DIR`, `RAW_LAYOUT_PHASE_DIR`, `RAW_MEASUREMENT_FLUX_DEPENDENCE_DIR`, `PROCESSED_REPORTS_DIR`, etc.) instead of hard-coded paths to keep scripts portable.
 
 ## 5. Script Authoring Workflow
 Utility CLIs must behave consistently.

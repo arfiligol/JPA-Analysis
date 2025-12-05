@@ -7,7 +7,7 @@ from pathlib import Path
 import pandas as pd
 
 from src.extraction import extract_from_admittance, normalize_mode_columns
-from src.utils import RAW_ADMITTANCE_DIR
+from src.utils import RAW_LAYOUT_ADMITTANCE_DIR
 from src.visualization import print_dataframe_table
 
 # Configure the list of admittance files to inspect
@@ -33,7 +33,7 @@ def resolve_csv_path(path_value: Path) -> Path | None:
     """Resolve a relative CSV path against `data/raw/admittance`."""
     if path_value.exists():
         return path_value
-    candidate = RAW_ADMITTANCE_DIR / path_value
+    candidate = RAW_LAYOUT_ADMITTANCE_DIR / path_value
     if candidate.exists():
         return candidate
     print(f"[Warning] File not found: {path_value}")
