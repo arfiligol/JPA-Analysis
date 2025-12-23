@@ -85,6 +85,8 @@ def _plot_json_results_plotly(
         yaxis_title="Frequency [GHz]",
         legend_title="Datasets",
     )
+    # Update y-axis range to 0-20 GHz as requested
+    fig.update_yaxes(range=[0, 20])
     fig.show(config=plotly_default_config(title))
 
 
@@ -127,6 +129,7 @@ def _plot_json_results_matplotlib(
             color_idx += 1
     plt.xlabel(r"Junction Inductance $L_{jun}$ [nH]", fontsize=MATPLOTLIB_FONT_SIZE)  # pyright: ignore
     plt.ylabel("Frequency [GHz]", fontsize=MATPLOTLIB_FONT_SIZE)  # pyright: ignore
+    plt.ylim(0, 20)  # Limit range to 0-20 GHz
     plt.title(title, fontsize=MATPLOTLIB_TITLE_SIZE)  # pyright: ignore
     plt.legend(bbox_to_anchor=(1.02, 1), loc="upper left")  # pyright: ignore
     plt.grid(True, linestyle="--", alpha=0.6)  # pyright: ignore

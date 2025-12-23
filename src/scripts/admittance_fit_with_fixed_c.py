@@ -29,6 +29,7 @@ DEFAULT_COMPONENT_IDS: Sequence[str] = [
 ]
 DEFAULT_MODES_TO_PLOT: Sequence[str] = ["Mode 1"]
 DEFAULT_CAPACITANCE_PF: float = 0.885
+DEFAULT_PLOT_TITLE: str = "SQUID JPA Mode Fits (Fixed C)"
 
 
 def parse_args() -> tuple[Sequence[str], Sequence[str] | None, str, float, bool]:
@@ -50,7 +51,7 @@ def parse_args() -> tuple[Sequence[str], Sequence[str] | None, str, float, bool]
     )
     _ = parser.add_argument(
         "--title",
-        default="SQUID JPA Mode Fits (Fixed C)",
+        default=DEFAULT_PLOT_TITLE,
         help="Custom title for the plot window.",
     )
     _ = parser.add_argument(

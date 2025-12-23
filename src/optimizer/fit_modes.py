@@ -12,18 +12,63 @@ from src.types import FitResultsByMode, ModeFitFailure, ModeFitSuccess
 ParameterBounds = dict[str, tuple[float | None, float | None]]
 
 
+def fit_squid_model(
+    df_modes: pd.DataFrame,
+    parameter_bounds: ParameterBounds | None = None,
+) -> FitResultsByMode:
+    """
+    Fits the SQUID LC model to each Mode column, assuming NO Series Inductance (Ls = 0).
+    Filters out L_jun <= 0 cases.
+    """
+    return _fit_resonant_modes(
+        df_modes,
+        fixed_capacitance_pf=None,
+        fixed_Ls_nH=0.0,
+        parameter_bounds=parameter_bounds,
+    )
+
+
+def fit_squid_model_with_Ls(
+    df_modes: pd.DataFrame,
+    parameter_bounds: ParameterBounds | None = None,
+) -> FitResultsByMode:
+    """
+    Fits the SQUID LC model to each Mode column, including Series Inductance (Ls).
+    Filters out L_jun <= 0 cases.
+    """
+    return _fit_resonant_modes(
+        df_modes,
+        fixed_capacitance_pf=None,
+        fixed_Ls_nH=None,
+        parameter_bounds=parameter_bounds,
+    )
+
+
+def fit_squid_model_with_Ls_fixed_C(
+    df_modes: pd.DataFrame,
+    capacitance_pf: float,
+    parameter_bounds: ParameterBounds | None = None,
+) -> FitResultsByMode:
+    """
+    Fits SQUID LC model with Ls, but fixing Capacitance to a specific value.
+    Filters out L_jun <= 0 cases.
+    """
+    return _fit_resonant_modes(
+        df_modes,
+        fixed_capacitance_pf=capacitance_pf,
+        fixed_Ls_nH=None,
+        parameter_bounds=parameter_bounds,
+    )
+
+
 def fit_resonant_modes(
     df_modes: pd.DataFrame,
     parameter_bounds: ParameterBounds | None = None,
 ) -> FitResultsByMode:
     """
-    Fits the SQUID LC model to each Mode column in the DataFrame.
+    Legacy alias for fit_squid_model_with_Ls.
     """
-    return _fit_resonant_modes(
-        df_modes,
-        fixed_capacitance_pf=None,
-        parameter_bounds=parameter_bounds,
-    )
+    return fit_squid_model_with_Ls(df_modes, parameter_bounds)
 
 
 def fit_resonant_modes_fixed_capacitance(
@@ -32,18 +77,15 @@ def fit_resonant_modes_fixed_capacitance(
     parameter_bounds: ParameterBounds | None = None,
 ) -> FitResultsByMode:
     """
-    Fit modes while holding the capacitance parameter fixed.
+    Legacy alias for fit_squid_model_with_Ls_fixed_C.
     """
-    return _fit_resonant_modes(
-        df_modes,
-        fixed_capacitance_pf=capacitance_pf,
-        parameter_bounds=parameter_bounds,
-    )
+    return fit_squid_model_with_Ls_fixed_C(df_modes, capacitance_pf, parameter_bounds)
 
 
 def _fit_resonant_modes(
     df_modes: pd.DataFrame,
     fixed_capacitance_pf: float | None,
+    fixed_Ls_nH: float | None,
     parameter_bounds: ParameterBounds | None,
 ) -> FitResultsByMode:
     if df_modes is None or df_modes.empty:
@@ -59,12 +101,22 @@ def _fit_resonant_modes(
 
     x_data_all: np.ndarray = cast(np.ndarray, df_modes["L_jun"].values)
 
-    suffix = "" if fixed_capacitance_pf is None else f" (C fixed at {fixed_capacitance_pf:.4f} pF)"
+    suffix_parts = []
+    if fixed_capacitance_pf is not None:
+        suffix_parts.append(f"C={fixed_capacitance_pf:.4f} pF")
+    if fixed_Ls_nH is not None:
+        suffix_parts.append(f"Ls={fixed_Ls_nH:.4f} nH")
+
+    suffix = f" ({', '.join(suffix_parts)})" if suffix_parts else ""
     print(f"Starting fitting analysis for {len(mode_cols)} modes{suffix}...")
 
     for mode_name in mode_cols:
         df_clean = df_modes[["L_jun", mode_name]].dropna()
-        df_clean = df_clean[df_clean[mode_name] > 0.001]
+
+        # Filter: keep only valid L_jun (> 1 fH effectively) and valid Freq (> 1 MHz)
+        # Assuming L_jun is in nH/pH or similar positive unit.
+        # User requested filtering L=0 specifically.
+        df_clean = df_clean[(df_clean["L_jun"] > 1e-6) & (df_clean[mode_name] > 0.001)]
 
         if len(df_clean) < 3:
             failure_result: ModeFitFailure = {
@@ -79,12 +131,21 @@ def _fit_resonant_modes(
 
         model = Model(squid_lc_frequency, independent_vars=["L_jun"])
         params = model.make_params(Ls_nH=0.1, C_pF=1.0)
+
+        # Default physical bounds
         params["Ls_nH"].min = 0.0
         params["C_pF"].min = 0.0
+
+        # Apply user bounds
         _apply_bounds(params["Ls_nH"], parameter_bounds, "Ls_nH")
         _apply_bounds(params["C_pF"], parameter_bounds, "C_pF")
+
+        # Apply fixed parameters logic
         if fixed_capacitance_pf is not None:
             params["C_pF"].set(value=fixed_capacitance_pf, vary=False)
+
+        if fixed_Ls_nH is not None:
+            params["Ls_nH"].set(value=fixed_Ls_nH, vary=False)
 
         try:
             result = model.fit(y_fit, params=params, L_jun=x_fit)
@@ -101,7 +162,9 @@ def _fit_resonant_modes(
             if len(x_data_all) >= 2:
                 l_min = float(np.min(x_data_all))
                 l_max = float(np.max(x_data_all))
-                x_curve = np.linspace(l_min, l_max, 200)
+                # Avoid plotting at absolute 0, use 1e-12 as lower bound.
+                l_plot_min = max(l_min, 1e-12)
+                x_curve = np.linspace(l_plot_min, l_max, 200)
             else:
                 x_curve = x_data_all
             y_curve = cast(np.ndarray, result.eval(params=result.params, L_jun=x_curve))
@@ -127,6 +190,8 @@ def _fit_resonant_modes(
             caption = f"  > {mode_name}: Ls={Ls_fit:.4f} nH, C={C_fit:.4f} pF, RMSE={rmse:.4f}"
             if fixed_capacitance_pf is not None:
                 caption += " (C fixed)"
+            if fixed_Ls_nH is not None:
+                caption += " (Ls fixed)"
             print(caption)
         except Exception as exc:
             failure_result = ModeFitFailure(status="failed", reason=str(exc))

@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 import argparse
+from collections.abc import Sequence
 from pathlib import Path
-from typing import List, Literal, Optional, Sequence, Tuple, cast
+from typing import Literal, cast
 
 import numpy as np
 import pandas as pd
 
-from src.preprocess.loader import load_component_record, find_dataset
+from src.preprocess.loader import find_dataset, load_component_record
 from src.preprocess.schema import ParameterDataset, ParameterFamily, ParameterRepresentation
 from src.utils import PREPROCESSED_DATA_DIR
 from src.visualization import print_dataframe_table, render_flux_heatmap, render_flux_slice
@@ -16,7 +17,7 @@ from src.visualization.flux_plots import FluxView
 DEFAULT_COMPONENT_IDS: Sequence[str] = [
     "LJPAL6572_B44D1",
 ]
-DEFAULT_DEVICE: Optional[str] = None
+DEFAULT_DEVICE: str | None = None
 DEFAULT_VIEW: str = "all"
 DEFAULT_PHASE_UNIT: str = "rad"
 DEFAULT_WRAP_PHASE: bool = False
@@ -25,7 +26,9 @@ DEFAULT_SLICE_BIASES: Sequence[float] = (-1.5, 0.0, 1.5)
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Visualize flux dependence sweeps from preprocessed records.")
+    parser = argparse.ArgumentParser(
+        description="Visualize flux dependence sweeps from preprocessed records."
+    )
     parser.add_argument(
         "components",
         nargs="*",
@@ -79,7 +82,7 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def resolve_component_path(candidate: str) -> Optional[Path]:
+def resolve_component_path(candidate: str) -> Path | None:
     path = Path(candidate)
     if path.exists():
         return path
@@ -96,8 +99,12 @@ def dataset_to_pivot(dataset: ParameterDataset) -> pd.DataFrame:
     if len(dataset.axes) != 2:
         raise ValueError("Flux dependence datasets must have exactly two axes (frequency, bias).")
     freq_axis, bias_axis = dataset.axes
-    freq_index = pd.Index([float(value) for value in freq_axis.values], name=f"{freq_axis.name} [{freq_axis.unit}]")
-    bias_columns = pd.Index([float(value) for value in bias_axis.values], name=f"{bias_axis.name} [{bias_axis.unit}]")
+    freq_index = pd.Index(
+        [float(value) for value in freq_axis.values], name=f"{freq_axis.name} [{freq_axis.unit}]"
+    )
+    bias_columns = pd.Index(
+        [float(value) for value in bias_axis.values], name=f"{bias_axis.name} [{bias_axis.unit}]"
+    )
     matrix = np.asarray(dataset.values, dtype=float)
     return pd.DataFrame(matrix, index=freq_index, columns=bias_columns)
 
@@ -105,7 +112,7 @@ def dataset_to_pivot(dataset: ParameterDataset) -> pd.DataFrame:
 def load_flux_pivots(
     component_path: Path,
     parameter: str,
-) -> Tuple[pd.DataFrame, pd.DataFrame, dict[str, str], dict[str, str]]:
+) -> tuple[pd.DataFrame, pd.DataFrame, dict[str, str], dict[str, str]]:
     record = load_component_record(component_path)
     amp_dataset = find_dataset(
         record,
@@ -127,7 +134,7 @@ def load_flux_pivots(
 def build_sample_statistics(
     pivot_amp: pd.DataFrame,
     pivot_phase_deg: pd.DataFrame,
-    amp_unit: Optional[str],
+    amp_unit: str | None,
 ) -> pd.DataFrame:
     freq_vals = np.repeat(pivot_amp.index.to_numpy(dtype=float), pivot_amp.shape[1])
     bias_vals = np.tile(pivot_amp.columns.to_numpy(dtype=float), pivot_amp.shape[0])
@@ -145,7 +152,7 @@ def build_sample_statistics(
     return df.describe()
 
 
-def convert_phase_to_degrees(pivot_phase: pd.DataFrame, stored_unit: Optional[str]) -> pd.DataFrame:
+def convert_phase_to_degrees(pivot_phase: pd.DataFrame, stored_unit: str | None) -> pd.DataFrame:
     values = pivot_phase.to_numpy(dtype=float)
     if stored_unit and stored_unit.lower().startswith("rad"):
         converted = np.rad2deg(values)
@@ -165,7 +172,7 @@ def analyze_component(
     component_path: Path,
     parameter: str,
     views: Sequence[FluxView],
-    device_label: Optional[str],
+    device_label: str | None,
     phase_unit: str,
     wrap_phase: bool,
     freq_slices: Sequence[float],
@@ -175,7 +182,9 @@ def analyze_component(
     component_name = component_path.stem
     print(f"\n=== Flux dependence analysis: {component_name} ===")
 
-    pivot_amp, pivot_phase_raw, amp_metadata, phase_metadata = load_flux_pivots(component_path, parameter)
+    pivot_amp, pivot_phase_raw, amp_metadata, phase_metadata = load_flux_pivots(
+        component_path, parameter
+    )
     phase_deg = convert_phase_to_degrees(pivot_phase_raw, phase_metadata.get("unit"))
     phase_deg_unwrapped = unwrap_phase_deg(phase_deg)
     stats = build_sample_statistics(pivot_amp, phase_deg_unwrapped, amp_metadata.get("unit"))
@@ -261,7 +270,7 @@ def run() -> None:
         )
 
 
-def _resolve_views(selection: str) -> List[FluxView]:
+def _resolve_views(selection: str) -> list[FluxView]:
     if selection == "all":
         return ["amplitude", "phase", "combined"]
     return [cast(FluxView, selection)]
@@ -275,7 +284,7 @@ def _view_label(view: FluxView) -> str:
     return "Amplitude+Phase"
 
 
-def _format_power_text(value: Optional[str]) -> Optional[str]:
+def _format_power_text(value: str | None) -> str | None:
     if value is None:
         return None
     try:
@@ -289,7 +298,7 @@ def _prepare_phase_matrix(
     phase_deg_unwrapped: pd.DataFrame,
     phase_unit: str,
     wrap_phase: bool,
-) -> Tuple[pd.DataFrame, str]:
+) -> tuple[pd.DataFrame, str]:
     base_values = phase_deg_unwrapped.to_numpy(dtype=float)
 
     if phase_unit == "rad":
@@ -304,7 +313,9 @@ def _prepare_phase_matrix(
     if wrap_phase:
         values = ((values + limit) % (2 * limit)) - limit
 
-    matrix = pd.DataFrame(values, index=phase_deg_unwrapped.index, columns=phase_deg_unwrapped.columns)
+    matrix = pd.DataFrame(
+        values, index=phase_deg_unwrapped.index, columns=phase_deg_unwrapped.columns
+    )
     return matrix, label
 
 
@@ -313,7 +324,7 @@ def _extract_slice(
     pivot_phase: pd.DataFrame,
     axis: Literal["frequency", "bias"],
     target: float,
-) -> Optional[Tuple[float, pd.Series, pd.Series, str]]:
+) -> tuple[float, pd.Series, pd.Series, str] | None:
     if axis == "frequency":
         axis_values = pivot_amp.index.to_numpy(dtype=float)
         if axis_values.size == 0:

@@ -23,8 +23,9 @@ dev = [
 ]
 
 [project.scripts]
-squid-model-fit = "src.scripts.admittance_fit:run"
-squid-model-fit-fixed-c = "src.scripts.admittance_fit_with_fixed_c:run"
+squid-model-fit = "src.scripts.admittance_fit:run_no_ls"
+squid-model-with-Ls-fit = "src.scripts.admittance_fit:run_with_ls"
+squid-model-with-Ls-fixed-C-fit = "src.scripts.admittance_fit:run_with_ls_fixed_c"
 effective-capacitance-fit = "src.scripts.effective_capacitance_fit:run"
 flux-dependence-plot = "src.scripts.flux_dependence_plot:run"
 convert-hfss-admittance = "src.preprocess.convert_hfss_admittance:main"
