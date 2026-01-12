@@ -39,11 +39,15 @@ DEFAULT_COMPONENT_IDS: Sequence[str] = [
     # "LJPAL6574_B46D1",
     # "LJPAL6572_B46D1",
     # "LJPAL6572_B46D2",
-    "PF6FQ_Q0_Float",
-    "PF6FQ_Q0_diff",
-    "PF6FQ_Q0_Float_Deembed",
-    "PF6FQ_Q0_Float_No_Deembed",
+    # "PF6FQ_Q0_Float",
+    # "PF6FQ_Q0_diff",
+    # "PF6FQ_Q0_Float_Deembed",
+    # "PF6FQ_Q0_Float_No_Deembed",
     "PF6FQ_Q1_Float",
+    "PF6FQ_Q2_Float",
+    "PF6FQ_Q3_Float",
+    "PF6FQ_Q4_Float",
+    "PF6FQ_Q5_Float",
 ]
 
 # Specify which extracted modes should be plotted/highlighted.
