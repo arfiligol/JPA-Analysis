@@ -256,9 +256,28 @@ def validate_wiki_links(
     lines = content.split("\n")
 
     for line_num, line in enumerate(lines, start=1):
+        # 0. Check for unescaped pipes in links inside tables
+        is_table_row = line.strip().startswith("|")
+
         for match in WIKI_LINK_PATTERN.finditer(line):
             link_target = match.group(1)
             link_alias = match.group(2)
+            full_match = match.group(0)
+
+            # Check for unescaped pipe in table
+            if is_table_row:
+                # Check if the match contains a pipe that is NOT escaped
+                # Simple check: remove escaped pipes and check for remaining pipes
+                content_without_escaped = full_match.replace(r"\|", "")
+                if "|" in content_without_escaped:
+                    result.errors.append(
+                        ValidationError(
+                            file=file_path,
+                            line=line_num,
+                            message=f"Wiki Link in table contains unescaped pipe (breaks table formatting): {full_match}. Use '\\|' or remove alias.",
+                            category="link",
+                        )
+                    )
 
             # Check for missing alias
             if not link_alias:
@@ -271,14 +290,27 @@ def validate_wiki_links(
                     )
                 )
 
+            # Validate whitespace
+            if link_target != link_target.strip():
+                result.errors.append(
+                    ValidationError(
+                        file=file_path,
+                        line=line_num,
+                        message=f"Wiki Link target contains surrounding whitespace: '{link_target}'",
+                        category="link",
+                    )
+                )
+
+            clean_target = link_target.strip()
+
             # Resolve and check target
-            target_path = resolve_wiki_link(file_path, link_target, docs_root)
+            target_path = resolve_wiki_link(file_path, clean_target, docs_root)
             if target_path is None:
                 result.errors.append(
                     ValidationError(
                         file=file_path,
                         line=line_num,
-                        message=f"Wiki Link target not found: {link_target}",
+                        message=f"Wiki Link target not found: {clean_target}",
                         category="link",
                     )
                 )
@@ -312,6 +344,8 @@ def resolve_wiki_link(
         return resolved
 
     # Try adding .md extension
+    # IMPORTANT: Only add extension if it lacks one?
+    # Or just try. But be careful of the "whitespace fix" bug.
     with_md = resolved.with_suffix(".md")
     if with_md.exists():
         return with_md

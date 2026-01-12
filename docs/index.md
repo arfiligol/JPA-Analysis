@@ -14,16 +14,16 @@ last_updated: 2026-01-12
 updated_by: docs-team
 ---
 
-# SQUID JPA Analysis Documentation
+# index
 
 SQUID JPA (Josephson Parametric Amplifier) 模擬數據分析管線。
 
 ## Quick Navigation
 
-|  | Learning | Working |
-|------|----------|---------|
-| **Practical** | [[./tutorials/index.md|Tutorials]] | [[./how-to/index.md|How-to Guides]] |
-| **Theoretical** | [[./explanation/index.md|Explanation]] | [[./reference/index.md|Reference]] |
+|                 | Learning                 | Working       |                        |                 |
+| --------------- | ------------------------ | ------------- | ---------------------- | --------------- |
+| **Practical**   | [[./tutorials/index.md\|Tutorials]]   | [[./how-to/index.md\|How-to Guides]] |
+| **Theoretical** | [[./explanation/index.md\|Explanation]] | [[./reference/index.md\|Reference]]     |
 
 ## Documentation Quadrants
 
