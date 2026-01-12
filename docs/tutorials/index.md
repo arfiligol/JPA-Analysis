@@ -29,7 +29,7 @@ updated_by: docs-team
 | **1** | **Standardize Data** | `src/preprocess/convert_*.py` | [[../how-to/preprocess/index.md\|Preprocess Guide]] |
 | **2** | **Visualize Raw** | `src/scripts/plot_admittance.py` | [[../reference/cli/plot-admittance.md\|Visualize Admittance]] |
 | **3** | **Extract Resonance** | `src/extraction/admittance.py` | [[../explanation/physics/resonance-extraction.md\|Physics: Extraction]] |
-| **4** | **Fit LC Model** | `src/scripts/admittance_fit.py` | [[./getting-started.md\|Tutorial: Start Here]]<br/>[[../how-to/analysis/admittance-fit.md\|How-to: Fit]] |
+| **4** | **Fit LC Model** | `src/scripts/admittance_fit.py` | [[./resonance-fitting.md\|Tutorial: Resonance Fitting]]<br/>[[../how-to/analysis/admittance-fit.md\|How-to: Fit]] |
 
 ## 2. Flux Dependence Analysis
 
@@ -54,9 +54,9 @@ updated_by: docs-team
 
 建議的學習順序：
 
-1. **New User**: 從 [[./getting-started.md\|Getting Started]] 開始，跑通一次完整的 Core Workflow。
-2. **Analyst**: 閱讀 [[../explanation/physics/index.md\|Physics]] 理解模型原理，然後參考 [[../how-to/index.md\|How-to Guides]] 解決具體問題。
-3. **Developer**: 閱讀 [[../explanation/pipeline/data-flow.md\|Pipeline Data Flow]] 與 [[../reference/guardrails/index.md\|Guardrails]] 了解如何貢獻代碼。
+1. **New User**: 從 **[[./resonance-fitting.md\|Resonance Fitting Workflow]]** 開始，跑通一次完整的參數提取流程，同時學習物理背景。
+2. **Experiment**: 接著嘗試 **[[./flux-analysis.md\|Flux Analysis Workflow]]** 學習如何處理實驗數據。
+3. **Analyst**: 閱讀 [[../explanation/physics/index.md\|Physics]] 深入理解模型細節。
 
 ## Need to add a new feature?
 
